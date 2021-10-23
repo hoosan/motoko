@@ -9,6 +9,8 @@ target
 **/*~
 result*
 
+build/
+
 /samples/**/*.txt
 
 enable-internals
