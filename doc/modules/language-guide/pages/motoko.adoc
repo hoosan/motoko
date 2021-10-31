@@ -1,3 +1,131 @@
+= Motoko プログラミング言語
+:page-layout: default
+:proglang: Motoko
+:platform: Internet Computer blockchain network
+:IC: Internet Computer
+:ext: .mo
+:company-id: DFINITY
+:sdk-short-name: DFINITY Canister SDK
+:sdk-long-name: DFINITY Canister Software Development Kit (SDK)
+ifdef::env-github,env-browser[:outfilesuffix:.adoc]
+
+[IMPORTANT]
+=====================================================================
+{proglang} プログラミング言語は、 {sdk-short-name} のリリースや、 {proglang} コンパイラのアップデートを経て進化を続けています。
+新しい機能を試したり、何が変わったのかを知るために、定期的に戻って確認しに来ましょう。
+=====================================================================
+
+{proglang} プログラミング言語は、Internet Computer ブロックチェーンネットワーク上で動く次世代の Dapps をビルドしたい開発者のための、新しく現代的で型安全な言語です。
+{proglang} は、{IC} のユニークな機能をサポートし、親しみやすいけど頑丈なプログラミング環境を提供するよう、特別に設計されています。
+新しい言語として {proglang} は、新たな機能や改善のサポートを経て進化し続けています。
+
+{proglang} コンパイラ、ドキュメント、また他のツールは、 https://github.com/dfinity/motoko[オープンソース] であり、Apache 2.0 ライセンスを得てリリースされています。コントリビュートは歓迎です。
+
+[.cards.cards-4.personas.conceal-title]
+{empty}
+
+[.card]
+== ネイティブ Canister スマートコントラクトサポート
+
+{proglang} は、{IC} Canister スマートコントラクトへの、ネイテイブサポートを持っています。
+
+Canister スマートコントラクト (または略して Canister) は、 {proglang} Actor として表されます。 Actor とは、そのステータスを完全にカプセル化して、非同期メッセージでのみ別の Actor との通信を行う自律的なオブジェクトです。
+
+[source#counter,motoko]
+----
+include::../examples/Counter.mo[]
+----
+
+[.card]
+== ダイレクトスタイルでシーケンシャルにコードを書く
+
+{IC} 上では、Canisters は他の Canisters と非同期のメッセージを送ることでコミュニケーションができます。
+
+非同期のプログラミングは難しいので、{proglang} はより単純なシーケンシャルスタイルでコードを書くことを可能にしています。非同期のメッセージは _future_ を返す関数呼び出しであり、`await` コンストラクトは future が完了するまで処理を延期することを許可します。この単純な機能は、他の言語でも不適切である非同期プログラミングでの"コールバック地獄"を回避します。
+
+[source.include_counter,motoko]
+----
+include::../examples/factorial.mo[lines=9..-1]
+----
+
+
+[.card]
+== 現代的な型システム
+
+{proglang} は、JavaScript や他の有名言語と直感的に馴染みやすくなるよう設計されていますが、構造的型、ジェネリクス、バリアント型、または静的なパターンマッチングのような現代的な機能も提供します。
+
+[source,motoko]
+----
+include::../examples/tree.mo[]
+----
+
+[.card]
+== 自動生成の IDL ファイル
+
+{proglang} Actor は、引数と返り値の型を示す関数として、常に型付けされたインターフェースをクライアントに、提供しています。
+
+{proglang} コンパイラー（かつ SDK ）は、Candid と呼ばれる言語に依存しないフォーマットでこのインターフェースを出力するので、Candid をサポートしている別の Canisters やブラウザ上のコードやスマートフォンアプリは、Actor のサービスを利用することができる。{proglang} コンパイラは、Candid ファイルを消費かつ生産でき、{proglang} にシームレスに他の言語（ Candid サポートから提供された）で埋め込まれた Canister と接続することを許可します。
+
+例えば、以前の {proglang} の `+Counter+` Actor は、次に続く Candid インターフェースを持っています。
+
+[source,candid]
+....
+service Counter : {
+  inc : () -> (nat);
+}
+....
+
+[.card]
+== 直交永続性
+
+{IC} は、作動している Canister のメモリと他のステータスも保持しています。それゆえ、Motoko Actor のステータスは、そのインメモリデータ構造も含め永久に残り続けます。Actor のステータスは、それぞれのメッセージと共に復元することや外部ストレージに保存することを明確に必要としていません。
+
+例えば、シーケンシャルなIDをテキストの名前に割り当てる次の `Registry` Actor (Canister) では、Actor のステータスがたくさんの {IC} ノードマシーンで複製されたもので、一般的にメモリ内にはいないれども、ハッシュテーブルのステータスはコールを介して保存されています。
+
+[source,motoko]
+----
+include::../examples/Registry.mo[]
+----
+
+[.card]
+== アップグレード
+
+{proglang} は、Canister のコードをアップグレードするとき Canister のデータを保持できることを許可する言語機能を含めた、直交永続性を活用するのを助ける数多くの機能を提供しています。
+
+例えば、{proglang} は、ある変数を `stable` として宣言することができます。 `stable` 変数の値は、 Canister アップグレードでも自動的に保持されます。
+
+stable カウンターを考えてみましょう。
+
+[source,motoko]
+----
+include::../examples/StableCounter.mo[]
+----
+
+それは、例えばより高価な導入のような中断はなく、インストールされ、_n_ 回インクリメントされ、そうしてアップグレードされます。
+
+[source,motoko]
+----
+include::../examples/StableCounterUpgrade.mo[]
+----
+
+`+value+` は `stable` として宣言されていたので、現在のステータスやサービスの n はアップグレードの後でも保持されています。カウンティングは、0から再度始まるのではなく、n 回目から始まります。
+
+その新しいインターフェースは過去のものと互換性がありますので、既に存在している Canister に関するクライアントは動作を続けていきますが、新しいクライアントは、アップグレードした機能を最大限利用することもできます。（追加の `reset` 機能）
+
+stable な変数の使用のみでは解決できないシナリオために、{proglang} は、アップグレードの前後で即座に動作するかつ任意のステータスを静的な変数にすることを許可する、ユーザーが定義できるアップグレードフックを提供しています。
+
+
+[.card]
+== さらなる機能
+
+{proglang} は、派生形、任意精度演算、またはガベージコレクションを含めた、多くの開発者の生産性を上げる機能を提供しています。
+
+{proglang} は、スマートコントラクト Canister を導入するためだけの言語ではなく、またそうであることを意図していません。もしあなたのニーズを満たさない時のために、Rust プログラミング言語の CDK があります。
+私達の目標は、 {IC} 上やニュートラル Candid インターフェースを通した他国の Canister スマートコントラクトと一緒に動作する Canister スマートコントラクトをいかなる言語でも作成できるようにすることです。
+
+そのオーダーメイド設計は、少なくともしばらくの間 {proglang} が {IC} 上でのコーディングにおいて最も簡単かつ安全な言語であろうことを意味しています。
+
+////
 = Motoko Programming Language
 :page-layout: default
 :proglang: Motoko
@@ -133,4 +261,4 @@ Our goal is to enable any language (with a compiler that targets WebAssembly) to
 with other, perhaps foreign, canister smart contracts through language neutral Candid interfaces.
 
 Its tailored design means {proglang} should be the easiest and safest language for coding on the {IC}, at least for the forseeable future.
-
+////
