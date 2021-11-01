@@ -261,4 +261,5 @@ Our goal is to enable any language (with a compiler that targets WebAssembly) to
 with other, perhaps foreign, canister smart contracts through language neutral Candid interfaces.
 
 Its tailored design means {proglang} should be the easiest and safest language for coding on the {IC}, at least for the forseeable future.
+
 ////
