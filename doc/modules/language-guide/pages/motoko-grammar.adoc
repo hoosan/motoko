@@ -1,3 +1,15 @@
+= Motoko の文法
+:!page-repl:
+
+この章では、Motoko の具体的なシンタックスや文法について述べています。
+以下の詳述はツールによって自動生成されています。
+
+[source,bnf]
+----
+include::example$grammar.txt[]
+----
+
+////
 = Motoko grammar
 :!page-repl:
 
@@ -8,3 +20,4 @@ The specification is auto-generated with a tool.
 ----
 include::example$grammar.txt[]
 ----
+////
