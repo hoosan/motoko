@@ -113,7 +113,7 @@ Future については、link:actors-async{outfilesuffix}[Actor と async デー
 レコード、タプル、_バリアント_ と呼ばれる "`タグ付けされたデータ`" など、他の link:basic-concepts{outfilesuffix}#intro-values[値の型] も使用可能です。
 
 {proglang} は、_型の健全性_ としても知られる型安全性の形式的な特性を享受しています。
-この考え方は、link:basic-concepts{outfilesuffix}#intro-type-soundness[適切に型付けされた {proglang} プログラムは間違わない] というフレーズでしばしばまとめられます。これは、データに対して実行される操作は、その静的な型によって許可されるものだけであるという意味です。
+この考え方は、link:basic-concepts{outfilesuffix}#intro-type-soundness[正しく型付けされた {proglang} プログラムは間違いを起こさない] というフレーズでしばしばまとめられます。これは、データに対して実行される操作は、その静的な型によって許可されるものだけであるという意味です。
 
 例えば、{proglang} プログラムの各変数には関連する _型_ があり、この型はプログラムが実行される前に _静的に_ 知られています。
 各変数の使用はコンパイラによってチェックされ、NULL 参照エラー、無効なフィールドアクセスなどの実行時の型エラーを防ぎます。
