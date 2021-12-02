@@ -3,7 +3,7 @@
 ** xref:about-this-guide.adoc[言語ガイドについて]
 ** xref:motoko-introduction.adoc[イントロダクション]
 ** xref:basic-concepts.adoc[基本的なコンセプトと用語]
-** xref:mutable-state.adoc[Mutable state]
+** xref:mutable-state.adoc[ミュータブルなステート]
 ** xref:local-objects-classes.adoc[Local objects and classes]
 ** xref:actors-async.adoc[Actors and async data]
 ** xref:errors.adoc[Error Handling]

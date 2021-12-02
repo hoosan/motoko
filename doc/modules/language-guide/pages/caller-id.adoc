@@ -58,7 +58,7 @@ include::../examples/Counters-caller-pat.mo[]
 NOTE: 単純な Actor 宣言では、そのインストーラにアクセスすることはできません。Actor のインストーラにアクセスする必要がある場合は、Actor 宣言を引数なしの Actor クラスに書き換えてください。
 
 プリンシパルは等価性、順序付け、ハッシングをサポートしているため、コンテナにプリンシパルを効率的に格納して、許可リストや拒否リストを管理することができます。
-プリンシパルに関するその他の操作は、link:../base-libraries/principal{outfilesuffix}[Principal] ベースライブラリを参照してください。
+プリンシパルに関するその他の操作は、link:../base-libraries/principal{outfilesuffix}[Principal] 標準ライブラリを参照してください。
 
 ////
 = Principals and caller identification
