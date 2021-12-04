@@ -1,3 +1,292 @@
+= Actor と async データ
+:proglang: Motoko
+:company-id: DFINITY
+
+{IC} のプログラミングモデルは、メモリが分離された Canister が、Candid の値をエンコードしたバイナリデータを非同期にメッセージングして通信するというものです。
+Canister はそのメッセージを一度に処理し、競合状態を防ぎます。
+Canister はコールバックを使用して、Canister 間で発行したメッセージの結果に対して何をする必要があるかを登録します。
+
+{proglang} は、{IC} の複雑さを、よく知られている高レベルの抽象化である _Actor_ モデルで抽象化します。
+各 Canister は型付けされた Actor として表現されます。Actor の型は、その Actor が扱えるメッセージのリストです。各メッセージは型付きの非同期関数として抽象化されます。
+Actor 型から Candid 型への変換は、基礎となる {IC} の生のバイナリデータの構造を強制します。
+Actor はオブジェクトに似ていますが、そのステートが完全に分離されていること、外部環境とのやりとりが完全に非同期のメッセージングによって行われること、同時進行中の Actor によって並列に発行されたメッセージであっても一度に処理されることが異なります。
+
+{proglang} では、Actor へのメッセージ送信は関数呼び出しですが、呼び出しが戻るまで発信側をブロッキングするのではなく、メッセージが受信側のキューに入り、リクエストが保留中であることを表す _future_ が発信側にすぐに返されます。
+future は、発信側がリクエストを実行したときの最終的な結果に対するプレースホルダーであり、後でクエリすることができます。
+リクエストを発行してから結果を待つまでの間、発信側は同じ Actor や他の Actor にさらにリクエストを発行するなど、他の作業を自由に行うことができます。
+受信側がリクエストを処理すると、future が完了し、その結果が発信側に返され利用できるようになります。
+発信側が future を待っている場合は、結果が返り次第処理を再開するか、そうでない場合は結果を後で使用できるように future に保存します。
+
+{proglang} では、Actor は専用の構文と型を持っています。メッセージングは、future を返す _shared_ 関数と呼ばれる関数で処理されます（リモートの Actor が利用できるため、shared と呼ばれます）。
+ここで、future の `f` が、ある型 `T` に対する特別な型である `async T` の値であるとします。
+`f` が完了するのを待つことは、`await f` を使って `T` 型の値を得ることで表現されます。
+メッセージングにおいて共有ステートを持たないようにするには、例えばオブジェクトや可変配列を送信するなどの方法があります。
+shared 関数で送信できるデータは、不変の _shared_ 型に制限されています。
+
+はじめに、最も単純でステートフル（状態を保持する）な Service を考えてみましょう。以前のローカル `counter` オブジェクトの分散バージョンである `Counter` Actor です。
+
+== 例：カウンタの Service
+
+以下のような Actor の宣言を考えます。
+
+[source,motoko]
+----
+include::../examples/counter-actor.mo[]
+----
+
+////
+actor Counter {
+
+  var count = 0;
+
+  public shared func inc() : async () { count += 1 };
+
+  public shared func read() : async Nat { count };
+
+  public shared func bump() : async Nat {
+    count += 1;
+    count;
+  };
+};
+////
+
+`Counter` Actor は、1つのフィールドと3つのパブリックな _shared_ 関数を宣言しています。
+
+* フィールド `count` は可変で、0 に初期化され、暗黙的に `private` となります。
+* 関数 `inc()` は、非同期的にカウンタをインクリメントし、同期のために `async ()` 型の future を返します。
+* 関数 `read()` は、非同期にカウンタの値を読み込み、その値を含む `async Nat` 型の future を返します。
+* 関数 `bump()` は、非同期的にカウンタをインクリメントし、値を読み込みます。
+
+shared 関数は、ローカル関数とは異なり、リモートの呼び出し元からアクセス可能です。さらに、引数と戻り値は _shared_ 型でなければならないという追加の制限があります。shared 型はイミュータブルなデータ、Actor の参照、shared 関数の参照などを含む型のサブセットですが、ローカル関数への参照とミュータブルなデータは含まれません。Actor とのやりとりはすべて非同期で行われるので、Actor の関数は必ず future を返さなければなりません。つまり、ある型 `T` に対して `async T` という形の型を返さなければなりません。
+
+`Counter` Actor のステート（`count`）を読み取ったり変更したりするには、shared 関数を使用するしかありません。
+
+`async T` 型の値は future です。future の生成元は、値またはエラーの結果を返した時点で future を完了させます。
+
+オブジェクトやモジュールとは異なり、Actor は関数のみを公開することができ、それらは `shared` 関数である必要があります。このため {proglang} では、パブリックな Actor 関数の `shared` 修飾子を省略することができ、より簡潔に同じ Actor を宣言することが可能になっています。
+
+[source#counter,motoko]
+----
+include::../examples/counter-actor-sugar.mo[]
+----
+
+現在、shared 関数を宣言できるのは、Actor や Actor クラスのボディの中だけです。このような制限はあるものの、shared 関数は {proglang} の第一級関数であり、引数や返り値として渡したり、データ構造に格納したりすることができます。
+
+shared 関数の型は、shared 関数型を使って指定します。たとえば、`inc` の型は `shared () -> async Nat` であり、他の Service への独立したコールバックとして渡すことができます (例として link:sharing{outfilesuffix}[publish-subscribe] を参照してください)。
+
+
+== Actor 型
+
+オブジェクトにオブジェクト型があるように、Actor には _Actor 型_ があります。`Counter` Actor は、以下の型を持っています。
+
+[source.no-repl, motoko]
+....
+actor {
+  inc  : shared () -> async ();
+  read : shared () -> async Nat;
+  bump : shared () -> async Nat;
+}
+....
+
+繰り返しになりますが、`shared` 修飾子は Actor のすべてのメンバー関数に必要なので、{proglang} では、表示時と Actor 型を書く際に記載を省略することができます。
+
+よって、先述の型はより簡潔に表現すると次のようになります。
+
+[source.no-repl, motoko]
+....
+actor {
+  inc  : () -> async ();
+  read : () -> async Nat;
+  bump : () -> async Nat;
+}
+....
+
+オブジェクト型と同様に、Actor 型も派生型をサポートしています。ある Actor 型は、より一般的な型を使っていて、関数の数がより少ない Actor の派生型となります。
+
+== `await` を使って非同期の future を使用する
+
+shared 関数の呼び出し側は、一般的には、ある T についての `async T` 型の値である future を受け取ります。
+
+呼び出し側であるコンシューマ（受け取り側）がこの future に対してできることは、プロデューサ（future の生成側）の処理が完了するのを待つか、future を捨ててしまうか、後で使うために保存するかです。
+
+`async` 値の結果にアクセスするには、future の受け取り側で `*await*` 式を使用します。
+
+例えば、上述の `Counter.read()` の結果を利用するには、まず future を変数 `a` にバインドし、次に `await` で future 処理後の返り値となる `Nat` の `n` を取得します。
+
+[source.include_counter, motoko]
+----
+let a : async Nat = Counter.read();
+let n : Nat = await a;
+----
+
+1行目はすぐに _カウンタ値の future_ を受け取りますが、処理の完了を待っていないため、自然数として使用することは（まだ）できません。
+
+2行目は、この future を ``await`` し、その結果を自然数で取り出します。
+この行は、future の処理が完了するまで実行をブロッキングします。
+
+一般的には、2つのステップを1つにまとめ、非同期呼び出しを直接 `await` します。
+
+[source.include_counter, motoko]
+----
+let n : Nat = await Counter.read();
+----
+
+呼び出し先が結果を返すまでブロッキングするローカル関数の呼び出しとは異なり、shared 関数の呼び出しは future である `f` をブロッキングせずにすぐに返します。
+呼び出し時にブロッキングする代わりに、後で `await f` を呼び出すと、`f` が完了するまで現在の計算が中断されます。
+呼び出し先によって future が完了すると、`await f` の実行はその結果とともに再開されます。
+もし結果が値であれば、`await f` はその値を返します。
+そうでなければ、結果は何らかのエラーであり、`await f` はそのエラーを `await f` の呼び出し側に伝播させます。
+
+future を 2 回 await しても同じ結果になり、future に何らかのエラーが格納されている場合にはそのエラーが再びスローされます。
+サスペンドは、future がすでに完了していても発生します。これによって、_それぞれの_ `await` の前に行われたステートの変更やメッセージ送信が確実にコミットされます。
+
+WARNING: `await` を含まない関数はアトミックに実行されることが保証されています。具体的には、関数の実行中に環境が Actor のステートを変更することはできません。しかしながら、関数が `await` を実行すると、アトミック性は保証されなくなります。
+`await` によって実行が一時停止され再開するまでの間、その Actor のステートは他の Actor からのメッセージの同時処理により変化する可能性があります。非同期の状態変化を防ぐのはプログラマの責任です。ただし、プログラマは `await` がコミットされる前に行われた状態変化に関しては、他の Actor からの干渉がないことを信じることができます。
+
+例えば上記の `bump()` の実装では、`count` の値を 1 つのアトミックなステップでインクリメントし、読み取ることが保証されています。
+別の実装としては以下が考えられます。
+
+[source.no-repl, motoko]
+....
+  public shared func bump() : async Nat {
+    await inc();
+    await read();
+  };
+....
+
+これは上記の `bump()` の実装とは異なるセマンティクスとなり、Actor の別のクライアントが操作に干渉することを可能にします。それぞれの `await` は実行を一時停止するので、別の Actor がこの Actor のステートを関数の実行中に変更することが可能になります。
+設計上、明示的な ``await`` は干渉の可能性があるポイントを、コードを読む人に対して明確にします。
+
+== トラップとコミットポイント
+
+トラップとは、ゼロ除算、範囲外への配列インデックス、数値のオーバーフロー、Cycle の枯渇、アサーションの失敗などが原因で発生する、回復不能なランタイムエラーのことです。
+
+`await` 式を実行せずに実行される shared 関数の呼び出しは、サスペンドせずにアトミックに実行されます。`await` 式を含まない shared 関数は、構文的にアトミックです。
+
+アトミックな shared 関数は、その実行時のトラップによって Actor のステートやその環境に目に見える影響を与えません。
+すなわち、トラップされた場合にはステートの変化はすべて元に戻され、送信したメッセージはすべて破棄されます。
+実際には、すべての状態変化とメッセージ送信は、実行中は暫定的なものであり、エラー無しに _コミットポイント_ に到達して初めてコミットされます。
+
+暫定的な状態変化やメッセージ送信が取り消されずにコミットされるポイントは以下の通りです。
+
+* 結果を生成することによる shared 関数の暗黙的な終了
+* `return` や `throw` 式による明示的な終了
+* 明示的な `await` 式
+
+トラップが起こると、最後のコミットポイント以降に行われた変更のみが取り消されます。特に、複数の `await` を行う非アトミック関数では、トラップが起こると最後の `await` 以降に行われた変更のみが取り消され、その前のすべての副作用はコミットされてしまい、元に戻すことはできません。
+
+例えば、次のような（作為的に）ステートフルな `Atomicity` Actor を考えてみましょう。
+
+[source.no-repl, motoko]
+....
+include::../examples/atomicity.mo[]
+....
+
+shared 関数である `atomic()` を呼び出すと、最後のステートメントがトラップを引き起こしてエラーとなります。しかし、このトラップによって、可変型変数 `s` の値は `1` ではなく `0` になり、変数 `pinged` の値は `true` ではなく `false` になります。これは、`atomic` メソッド が `await` を実行する前、あるいは結果の値を得て終了する前にトラップが発生しているためです。`atomic` が `ping()` を呼び出しても、`ping()` は次のコミットポイントまでの暫定的なもの (キューされたもの) なので、反映されることはありません。
+
+shared 関数である `nonAtomic()` を呼び出すと、最後のステートメントがトラップを引き起こしてエラーとなります。しかし、このトラップによって、変数 `s` の値は `0` ではなく `3` になり、変数 `pinged` の値は `false` ではなく `true` になります。これは、各 `await` がメッセージ送信などの先行する副作用をコミットするためです。`f` に対する 2 回目の await で `f` が完了しても、この await はステートを強制的にコミットし、実行を一時停止して、この Actor への他のメッセージのインターリーブ処理が可能になります。
+
+== クエリ関数
+
+{IC} 用語では、3つの `Counter` 関数はすべて _アップデート_ メッセージであり、関数が呼ばれると Canister のステートを変更することができます。
+ステートを変更するには、{IC} が変更をコミットして結果を返す前に、分散したレプリカ間の合意が必要です。
+コンセンサスを得るのは、比較的高いレイテンシを伴う高価なプロセスです。
+
+コンセンサスの保証を必要としないアプリケーションの部分については、{IC} はより効率的であるクエリ操作をサポートしています。
+これは、単一のレプリカから Canister のステートを読み取り、実行中にスナップショットを変更して結果を返すことができますが、ステートを恒久的に変更したり、さらなる {IC} のメッセージを送信することはできません。
+
+{proglang} は、`query` 関数を使用した {IC} のクエリの実装をサポートしています。`query` キーワードは shared Actor 関数の宣言を変更し、コミットせずに高速で実行されるクエリのセマンティクスになるようにします。
+
+例えば、信頼性の高い `read` 関数をルーズにした `peek` 関数で `Counter` Actor を拡張してみましょう。
+
+[source,motoko]
+----
+include::../examples/CounterWithQuery.mo[]
+----
+
+`peek()` 関数は、`Counter` フロントエンドで現在のカウンタの値を素早く（ただし信頼性低く）表示するのに使用される可能性があります。
+
+クエリメソッドが Actor の関数を呼び出すことは、{IC} が課す動的な制限に違反するため、コンパイルエラーとなります。通常の関数への呼び出しは許可されています。
+
+クエリ関数は、非クエリ関数から呼び出すことができます。
+これらのネストされた呼び出しにはコンセンサスが必要なため、ネストされたクエリコールの効率化は期待できないでしょう。
+
+`query` 修飾子はクエリ関数の型に反映されます。
+
+[source.no-repl, motoko]
+....
+  peek : shared query () -> async Nat
+....
+
+これまでと同様、`query` の宣言や Actor 型では、`shared` キーワードを省略することができます。
+
+== メッセージングの制限
+
+{IC} は、Canister がいつどのように通信可能かについて制限を設けています。これらの制限は {IC} 上では動的に実施されますが、{proglang} では静的に防止されるため、動的実行エラーの類を排除します。2つの例は以下の通りです。
+
+* Canister の設置時はコードを実行できますが、メッセージを送信できません。
+* Canister のクエリメソッドはメッセージを送信できません。
+
+これらの制限は、{proglang} ではどの式を使用できるかというコンテキストの制限として表れています。
+
+{proglang} では、（shared またはローカルの関数のボディ内や独立した式として登場する）`async` 式のボディ内に式が登場するとき、_非同期コンテキスト_ になります。
+唯一の例外は `query` 関数で、そのボディ内は非同期コンテキストとは見なされません。
+
+{proglang}では、shared 関数を呼び出すと、その関数が非同期コンテキストで呼び出されない限りエラーになります。また、Actor クラスのコンストラクタから shared 関数を呼び出してもエラーになります。
+
+`await` 構文は非同期コンテキストでのみ使用できます。
+
+`async` 構文は非同期コンテキストでのみ使用できます。
+
+非同期コンテキストでは、エラーを `throw` または `try/catch` することしかできません。
+これは、構造化されたエラー処理がメッセージングエラーに対してのみサポートされており、メッセージングそのものと同様、非同期コンテキストに限定されているためです。
+
+これらのルールは、ローカル関数は一般的に shared 関数を直接呼び出したり、future を `await` することができないことを意味します。この制限は時に厄介なものです。将来的には型システムを拡張することで、より寛容にしたいと考えています。
+
+////
+TODO: scoped awaits (if at all)
+////
+
+
+[#actor_classes]
+== Actor クラスによる Actor の一般化
+
+Actor _クラス_ は、単一の Actor 宣言を、同じインターフェイスを満たす Actor 群の宣言に一般化します。
+Actor クラスは、Actor のインターフェイスを指定する型と、引数が与えられるたびにその型の新たな Actor を構築する関数を宣言します。
+Actor クラスは、Actor を製造するファクトリーの役割を果たします。
+Canister の設置は {IC} では非同期なので、コンストラクタ関数も非同期であり、Actor を future で返します。
+
+例えば、コンストラクタのパラメータとして、`Nat` 型の変数 `init` を導入することで、上で与えられた `Counter` を以下の `Counter(init)` に一般化することができます。
+
+.Counters.mo
+[source#Counters, motoko]
+----
+include::../examples/Counters.mo[]
+----
+
+このクラスが `+Counters.mo+` というファイルに格納されている場合には、ファイルをモジュールとしてインポートし、それを使って初期値の異なる複数のアクターを作ることができます。
+
+[source.include_Counters, motoko]
+----
+import Counters "Counters";
+
+let C1 = await Counters.Counter(1);
+let C2 = await Counters.Counter(2);
+(await C1.read(), await C2.read())
+----
+
+上の最後の2行は、Actor クラスを2回 _インスタンス化_ しています。
+最初の呼び出しでは初期値 `1` を使用し、2回目の呼び出しでは初期値 `2` を使用します。
+Actor クラスのインスタンス化は非同期的なので、`Counter(init)` の各呼び出しは future を返し、結果として得られる Actor の値を `await` することができます。
+`C1` と `C2` はどちらも同じ `Counters.Counter` 型であり、互換性を持って使用することができます。
+
+
+NOTE: 現在のところ、{proglang} コンパイラは、単一の Actor または Actor クラスで構成されていないプログラムをコンパイルするとエラーになります。
+しかし、コンパイルされたプログラムは、インポートされた Actor クラスを参照することができます。
+詳しくは link:modules-and-imports{outfilesuffix}#importing_actor_classes[Actor クラスのインポート] と link:actor-classes{outfilesuffix}#actor_classes[Actor クラス] を参照してください。
+
+
+////
 = Actors and async data
 :proglang: Motoko
 :company-id: DFINITY
@@ -43,6 +332,7 @@ include::../examples/counter-actor.mo[]
 ----
 
 ////
+////
 actor Counter {
 
   var count = 0;
@@ -56,6 +346,7 @@ actor Counter {
     count;
   };
 };
+////
 ////
 
 The `Counter` actor declares one field and three public, _shared_ functions:
@@ -304,7 +595,9 @@ like messaging itself, confined to asynchronous contexts.
 These rules also mean that local functions cannot, in general, directly call shared functions or `await` futures. This limitation can sometimes be awkward:  we hope to extend the type system to be more permissive in future.
 
 ////
+////
 TODO: scoped awaits (if at all)
+////
 ////
 
 
@@ -349,3 +642,4 @@ NOTE: For now, the {proglang} compiler gives an error when compiling
 programs that do not consist of a single actor or actor class.
 Compiled programs may still, however, reference imported actor classes.
 For more information, see link:modules-and-imports{outfilesuffix}#importing_actor_classes[Importing actor classes] and link:actor-classes{outfilesuffix}#actor_classes[Actor classes].
+////
