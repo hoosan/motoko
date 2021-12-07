@@ -1,3 +1,121 @@
+= コンパイラのリファレンス
+:proglang: Motoko
+:sdk-short-name: DFINITY Canister SDK
+:company-id: DFINITY
+:!page-repl:
+
+{proglang} のコンパイラ(`+moc+`) は、{proglang} プログラムを実行可能な WebAssembly(Wasm) モジュールにコンパイルするための主要なツールです。
+コンパイラは {sdk-short-name} を使用してプロジェクトをビルドする際にバックグラウンドで実行されます。
+コマンドラインでコンパイラを直接起動した場合は、CTRL-C を押して終了することができます。
+
+この章では、コンパイラのコマンドラインのリファレンス情報を提供します。
+
+== moc
+
+{proglang} プログラムを実行可能な WebAssembly(Wasm) モジュールにコンパイルするには、{proglang} コンパイラ(`+moc+`)を使用します。
+
+=== 基本的な使い方
+
+[source,bash]
+----
+moc [option] [file ...]
+----
+
+=== オプション
+
+`+moc+` では以下のオプションが利用可能です。
+
+[width="100%",cols="<45%,<55%",options="header",]
+|===
+|オプション |説明
+|`+--actor-idl <idl-path>+` |Actor IDL (Candid) ファイルへのパスを指定する。
+
+|`+--actor-alias <alias> <principal>+` |Actor のインポートエイリアスを指定する。
+
+|`+--args <file>+` |<file> から改行区切りのコマンドライン引数を追加で読み込む。
+
+|`+--args0 <file>+` |<file> から NUL 区切りのコマンドライン引数を追加で読み込む。
+
+|`+-c+` |WebAssembly へコンパイルする。
+
+|`+--check+` |型チェックのみ実行する。
+
+|`+--compacting-gc+` | コンパクト GC を使用する。
+
+|`+--copying-gc+` | コピー GC を使用する（デフォルト）
+
+|`+--debug+` |ソース内のデバッグ式を優先する（デフォルト）。
+
+//|`+-dp+` |パースをダンプする。
+
+//|`+-dt+` |型チェックされた AST をダンプする。
+
+//|`+-dl+` |中間表現をダンプする。
+
+|`+--error-detail <n>+` |構文エラーのエラーメッセージの詳細度レベルを設定する。n は [0..3] （デフォルトでは2）。
+
+|`+-help+`,`+--help+` |使用に関する情報を表示する。
+
+|`+--hide-warnings+` |コンパイラの警告を隠す。
+
+|`+-Werror+` |警告をエラーとして取り扱う。
+
+|`+--idl+` | バイナリをコンパイルし Candid の IDL 仕様を `.did` ファイルに出力する。
+
+|`+-i+` |プログラムの実行を評価（-r オプションを意味する）するために、コンパイラを対話型の Read-eval-print loop (REPL) シェルで実行する。
+
+//|`+-iR+` |Interprets the lowered code.
+
+|`+--map+` |JavaScript ソースマップを出力する。
+
+//|`+-no-await+` |Disables await-lowering (with -iR).
+
+//|`+-no-async+` |Disables async-lowering (with -iR).
+
+//|`+-no-check-ir+` |Skips intermediate code checking.
+
+//|`+-no-link+` |Disables statically-linked runtime.
+
+|`+-no-system-api+` |システム API のインポートを無効化する。
+
+|`+-o <file>+` |出力ファイルを指定する。
+
+|`+-p <n>+` |出力深度を設定する。
+
+|`+--package <package-name> <package-path>+` |スペースで区切られたパッケージ名とパッケージパスのペアを指定する。
+
+|`+--public-metadata <name>+` |icp のカスタムセクション <name> (cidid:args または candid:service または motoko:stable-types) を `public` として出力する (デフォルトは `private`)。
+
+|`+--print-deps+` |与えられたソースファイルの依存関係を表示する。
+
+//|`+--profile+` |Activates profiling counters in interpreters.
+
+//|`+--profile-field <field>+` |Includes the given field from the program result in the profile file.
+
+//|`+--profile-file+` |Sets profiling output file.
+
+//|`+--profile-line-prefix <prefix>+` |Adds the specified prefix string to each profile line.
+
+|`+-r+` |プログラムを解釈する。
+
+|`+--release+` |ソースのソースのデバック式を無視する。
+
+//|`+--sanity-checks+` |Enable sanity checking in the runtime system and generated code (for compiler development only).
+
+| `--stable-types` |バイナリをコンパイルし、安定型のシグネチャを `.most` ファイルに出力する。
+
+| `--stable-compatible <pre> <post>` |安定型シグネチャ <pre> と <post> のアップグレード互換性をテストする。
+
+|`+-t+` |インタープリタのトレースを有効にする。
+
+|`+-v+` |冗長出力を生成する。
+
+|`+--version+` |バージョン情報を表示する。
+
+|`+-wasi-system-api+` |WASI システム API (wasmtime) を使用する。
+|===
+
+////
 = Compiler reference
 :proglang: Motoko
 :sdk-short-name: DFINITY Canister SDK
@@ -115,3 +233,4 @@ You can use the following options with the `+moc+` command.
 |`+-wasi-system-api+` |Uses the WASI system API (wasmtime).
 |===
 
+////
