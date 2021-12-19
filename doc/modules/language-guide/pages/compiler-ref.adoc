@@ -68,6 +68,8 @@ moc [option] [file ...]
 
 |`+--map+` |JavaScript ソースマップを出力する。
 
+| `+--max-stable-pages <n>+` |  `ExperimentStableMemory.mo` で利用できる最大ページ数を設定する（デフォルト値は 65536）。
+
 //|`+-no-await+` |Disables await-lowering (with -iR).
 
 //|`+-no-async+` |Disables async-lowering (with -iR).
