@@ -1,18 +1,14 @@
-= プリンシパルと Caller の証明
+= プリンシパルと Caller の身元証明
 :proglang: Motoko
 :IC: Internet Computer
 
-{proglang} の Shared 関数は、シンプルな Caller（関数の呼び出し元）の証明をサポートしており、これにより関数の Caller に関連付けられた {IC} の **プリンシパル** を検査することが可能になります。
+{proglang} の Shared 関数は、シンプルな Caller（関数の呼び出し元）の身元証明（Identification）をサポートしており、これにより関数の Caller に関連付けられた {IC} の **プリンシパル** を検査することが可能になります。
 関数の呼び出しに関連づけられたプリンシパルは、ユニークなユーザか Canister スマートコントラクトを同定する値です。
 
 関数の Caller に関連づけられたプリンシパルを用いて、プログラム内で基本的な形式の _アクセスコントロール_ を実装することができます。
 
 {proglang} では、`+shared+` キーワードを用いて `Shared` 関数を宣言します。
 また、Shared 関数は `+{caller : Principal}+` 型のオプション引数を宣言することができます。
-
-////
-(The type is a record to accommodate future extension.)
-////
 
 Shared 関数の Caller にアクセスする方法を説明するため、以下のような関数を考えます：
 
@@ -74,7 +70,9 @@ You can use the **principal** associated with the caller of a function to implem
 In {proglang}, the `+shared+` keyword is used to declare a shared function.
 The shared function can also declare an optional parameter of type `+{caller : Principal}+`.
 ////
+////
 (The type is a record to accommodate future extension.)
+////
 ////
 
 To illustrate how to access the caller of a shared function, consider the following:
