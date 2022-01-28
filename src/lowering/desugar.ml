@@ -312,7 +312,14 @@ and call_system_func_opt name es =
         S.dec = { it = S.LetD( { it = S.VarP id; _ } as p, _); _ };
         _
       } when id.it = name
-      -> Some (callE (varE (var id.it p.note)) [] (tupE []))
+      ->
+       Some (
+         if name = "heartbeat" then
+           blockE
+             [ expD (callE (varE (var id.it p.note)) [T.Any] (unitE())) ]
+             (unitE ())
+         else
+           callE (varE (var id.it p.note)) [] (tupE []))
     | _ -> None) es
 
 and build_candid ts obj_typ =
@@ -330,8 +337,8 @@ and export_interface txt =
   let binds = [T.scope_bind] in
   let typ = Func (Shared Query, Promises, binds, [], [text]) in
 
-  let scope_con = Con.fresh "T" (Abs ([], T.scope_bound)) in
-  let scope_con2 = Con.fresh "T2" (Abs ([], Any)) in
+  let scope_con = Cons.fresh "T" (Abs ([], T.scope_bound)) in
+  let scope_con2 = Cons.fresh "T2" (Abs ([], Any)) in
   let bind  = typ_arg scope_con T.Scope T.scope_bound in
   let bind2 = typ_arg scope_con2 T.Scope T.scope_bound in
   ([ letD (var v typ) (
@@ -398,7 +405,10 @@ and build_actor at ts self_id es obj_typ =
                         note = f.T.typ }
                     ) fields vs)
                  ty]));
-        I.postupgrade = match call_system_func_opt "postupgrade" es with
+        I.postupgrade = (match call_system_func_opt "postupgrade" es with
+                 | Some call -> call
+                 | None -> tupE []);
+        I.heartbeat = match call_system_func_opt "heartbeat" es with
                  | Some call -> call
                  | None -> tupE []},
     obj_typ)
@@ -580,7 +590,7 @@ and dec' at n d = match d with
     let body = if s.it = T.Actor
       then
         let (_, obj_typ) = T.as_async rng_typ in
-        let c = Con.fresh T.default_scope_var (T.Abs ([], T.scope_bound)) in
+        let c = Cons.fresh T.default_scope_var (T.Abs ([], T.scope_bound)) in
         asyncE (typ_arg c T.Scope T.scope_bound)
           (wrap { it = obj_block at s (Some self_id) dfs (T.promote obj_typ);
             at = at;
@@ -756,7 +766,7 @@ type import_declaration = Ir.dec list
 
 let actor_class_mod_exp id class_typ func =
   let fun_typ = func.note.Note.typ in
-  let class_con = Con.fresh id (T.Def([], class_typ)) in
+  let class_con = Cons.fresh id (T.Def([], class_typ)) in
   let v = fresh_var id fun_typ in
   blockE
     [letD v func]
@@ -798,9 +808,9 @@ let import_compiled_class (lib : S.comp_unit)  wasm : import_declaration =
   in
   let cs' = T.open_binds tbs in
   let c', _ = T.as_con (List.hd cs') in
-  let available = fresh_var "available" T.nat64 in
-  let accepted = fresh_var "accepted" T.nat64 in
-  let cycles = var "@cycles" (T.Mut (T.nat64)) in
+  let available = fresh_var "available" T.nat in
+  let accepted = fresh_var "accepted" T.nat in
+  let cycles = var "@cycles" (T.Mut (T.nat)) in
   let body =
     asyncE
       (typ_arg c' T.Scope T.scope_bound)

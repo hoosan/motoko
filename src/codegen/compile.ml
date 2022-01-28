@@ -3416,11 +3416,11 @@ module IC = struct
 
   let import_ic0 env =
       E.add_func_import env "ic0" "call_data_append" (i32s 2) [];
-      E.add_func_import env "ic0" "call_cycles_add" [I64Type] [];
+      E.add_func_import env "ic0" "call_cycles_add128" (i64s 2) [];
       E.add_func_import env "ic0" "call_new" (i32s 8) [];
       E.add_func_import env "ic0" "call_perform" [] [I32Type];
       E.add_func_import env "ic0" "call_on_cleanup" (i32s 2) [];
-      E.add_func_import env "ic0" "canister_cycle_balance" [] [I64Type];
+      E.add_func_import env "ic0" "canister_cycle_balance128" [I32Type] [];
       E.add_func_import env "ic0" "canister_self_copy" (i32s 3) [];
       E.add_func_import env "ic0" "canister_self_size" [] [I32Type];
       E.add_func_import env "ic0" "canister_status" [] [I32Type];
@@ -3429,9 +3429,9 @@ module IC = struct
       E.add_func_import env "ic0" "msg_arg_data_size" [] [I32Type];
       E.add_func_import env "ic0" "msg_caller_copy" (i32s 3) [];
       E.add_func_import env "ic0" "msg_caller_size" [] [I32Type];
-      E.add_func_import env "ic0" "msg_cycles_available" [] [I64Type];
-      E.add_func_import env "ic0" "msg_cycles_refunded" [] [I64Type];
-      E.add_func_import env "ic0" "msg_cycles_accept" [I64Type] [I64Type];
+      E.add_func_import env "ic0" "msg_cycles_available128" [I32Type] [];
+      E.add_func_import env "ic0" "msg_cycles_refunded128" [I32Type] [];
+      E.add_func_import env "ic0" "msg_cycles_accept128" [I64Type; I64Type; I32Type] [];
       E.add_func_import env "ic0" "certified_data_set" (i32s 2) [];
       E.add_func_import env "ic0" "data_certificate_present" [] [I32Type];
       E.add_func_import env "ic0" "data_certificate_size" [] [I32Type];
@@ -3580,6 +3580,18 @@ module IC = struct
       name = Wasm.Utf8.decode "canister_init";
       edesc = nr (FuncExport (nr fi))
       })
+
+  let export_heartbeat env =
+    assert (E.mode env = Flags.ICMode || E.mode env = Flags.RefMode);
+    let fi = E.add_fun env "canister_heartbeat"
+      (Func.of_body env [] [] (fun env ->
+        G.i (Call (nr (E.built_in env "heartbeat_exp"))) ^^
+        E.collect_garbage env))
+    in
+    E.add_export env (nr {
+      name = Wasm.Utf8.decode "canister_heartbeat";
+      edesc = nr (FuncExport (nr fi))
+    })
 
   let export_wasi_start env =
     assert (E.mode env = Flags.WASIMode);
@@ -3755,7 +3767,7 @@ module IC = struct
     match E.mode env with
     | Flags.ICMode
     | Flags.RefMode ->
-      system_call env "ic0" "canister_cycle_balance"
+      system_call env "ic0" "canister_cycle_balance128"
     | _ ->
       E.trap_with env "cannot read balance when running locally"
 
@@ -3763,7 +3775,7 @@ module IC = struct
     match E.mode env with
     | Flags.ICMode
     | Flags.RefMode ->
-      system_call env "ic0" "call_cycles_add"
+      system_call env "ic0" "call_cycles_add128"
     | _ ->
       E.trap_with env "cannot accept cycles when running locally"
 
@@ -3771,7 +3783,7 @@ module IC = struct
     match E.mode env with
     | Flags.ICMode
     | Flags.RefMode ->
-      system_call env "ic0" "msg_cycles_accept"
+      system_call env "ic0" "msg_cycles_accept128"
     | _ ->
       E.trap_with env "cannot accept cycles when running locally"
 
@@ -3779,7 +3791,7 @@ module IC = struct
     match E.mode env with
     | Flags.ICMode
     | Flags.RefMode ->
-      system_call env "ic0" "msg_cycles_available"
+      system_call env "ic0" "msg_cycles_available128"
     | _ ->
       E.trap_with env "cannot get cycles available when running locally"
 
@@ -3787,7 +3799,7 @@ module IC = struct
     match E.mode env with
     | Flags.ICMode
     | Flags.RefMode ->
-      system_call env "ic0" "msg_cycles_refunded"
+      system_call env "ic0" "msg_cycles_refunded128"
     | _ ->
       E.trap_with env "cannot get cycles refunded when running locally"
 
@@ -3818,6 +3830,8 @@ module IC = struct
       E.trap_with env "cannot get certificate when running locally"
 
 end (* IC *)
+
+
 
 module StableMem = struct
 
@@ -6788,6 +6802,47 @@ let compile_lit_as env sr_out lit =
   let sr_in, code = compile_lit env lit in
   code ^^ StackRep.adjust env sr_in sr_out
 
+module Cycles = struct
+
+  let load_cycles env = Func.share_code1 env "load_cycles" ("ptr", I32Type) [I32Type]
+    (fun env get_ptr ->
+      get_ptr ^^
+      (G.i (Load {ty = I64Type; align = 0; offset = 0l; sz = None })) ^^
+      BigNum.from_word64 env ^^
+      get_ptr ^^
+      compile_add_const 8l ^^
+      (G.i (Load {ty = I64Type; align = 0; offset = 0l; sz = None })) ^^
+      BigNum.from_word64 env ^^
+      (* shift left 64 *)
+      compile_lit_as env SR.Vanilla (Ir.NatLit (Numerics.Nat.of_big_int
+        (Big_int.power_int_positive_int 2 64))) ^^
+      BigNum.compile_mul env ^^ (* TODO: use shift left instead *)
+      BigNum.compile_add env)
+
+  let guard env =  Func.share_code1 env "__cycles_guard" ("val", I32Type) []
+    (fun env get_val ->
+      get_val ^^
+      compile_lit_as env SR.Vanilla (Ir.NatLit (Numerics.Nat.of_big_int
+        (Big_int.power_int_positive_int 2 128))) ^^
+      BigNum.compile_relop env Lt ^^
+      E.else_trap_with env "cycles out of bounds")
+
+  let push_high env =  Func.share_code1 env "__cycles_push_high" ("val", I32Type) [I64Type]
+    (fun env get_val ->
+      get_val ^^
+      (* shift right 64 bits *)
+      compile_lit_as env SR.Vanilla (Ir.NatLit (Numerics.Nat.of_big_int
+        (Big_int.power_int_positive_int 2 64))) ^^
+      BigNum.compile_unsigned_div env ^^ (* TODO: use shift right instead *)
+      BigNum.truncate_to_word64 env)
+
+  let push_low env =  Func.share_code1 env "__cycles_push_low" ("val", I32Type) [I64Type]
+    (fun env get_val ->
+      get_val ^^
+      BigNum.truncate_to_word64 env)
+
+end
+
 (* helper, traps with message *)
 let then_arithmetic_overflow env =
   E.then_trap_with env "arithmetic overflow"
@@ -8183,23 +8238,58 @@ and compile_exp (env : E.t) ae exp =
 
     (* Cycles *)
     | SystemCyclesBalancePrim, [] ->
-      SR.UnboxedWord64,
-      IC.cycle_balance env
+      SR.Vanilla,
+      Stack.with_words env "dst" 4l (fun get_dst ->
+        get_dst ^^
+        IC.cycle_balance env ^^
+        get_dst ^^
+        Cycles.load_cycles env
+      )
     | SystemCyclesAddPrim, [e1] ->
       SR.unit,
-      compile_exp_as env ae SR.UnboxedWord64 e1 ^^
+      let (set_cycles, get_cycles) = new_local env "cycles" in
+      compile_exp_vanilla env ae e1 ^^
+      set_cycles ^^
+      get_cycles ^^
+      Cycles.guard env ^^
+      get_cycles ^^
+      Cycles.push_high env ^^
+      get_cycles ^^
+      Cycles.push_low env ^^
       IC.cycles_add env
     | SystemCyclesAcceptPrim, [e1] ->
-      SR.UnboxedWord64,
-      compile_exp_as env ae SR.UnboxedWord64 e1 ^^
-      IC.cycles_accept env
+      SR.Vanilla,
+      let (set_cycles, get_cycles) = new_local env "cycles" in
+      Stack.with_words env "dst" 4l (fun get_dst ->
+        compile_exp_vanilla env ae e1 ^^
+        set_cycles ^^
+        get_cycles ^^
+        Cycles.guard env ^^
+        get_cycles ^^
+        Cycles.push_high env ^^
+        get_cycles ^^
+        Cycles.push_low env ^^
+        get_dst ^^
+        IC.cycles_accept env ^^
+        get_dst ^^
+        Cycles.load_cycles env
+      )
     | SystemCyclesAvailablePrim, [] ->
-      SR.UnboxedWord64,
-      IC.cycles_available env
+      SR.Vanilla,
+      Stack.with_words env "dst" 4l (fun get_dst ->
+        get_dst ^^
+        IC.cycles_available env ^^
+        get_dst ^^
+        Cycles.load_cycles env
+      )
     | SystemCyclesRefundedPrim, [] ->
-      SR.UnboxedWord64,
-      IC.cycles_refunded env
-
+      SR.Vanilla,
+      Stack.with_words env "dst" 4l (fun get_dst ->
+        get_dst ^^
+        IC.cycles_refunded env ^^
+        get_dst ^^
+        Cycles.load_cycles env
+      )
     | SetCertifiedData, [e1] ->
       SR.unit,
       compile_exp_vanilla env ae e1 ^^
@@ -8827,6 +8917,15 @@ and main_actor as_opt mod_env ds fs up =
       compile_exp_as env ae2 SR.unit up.postupgrade);
     IC.export_upgrade_methods env;
 
+    (* Export heartbeat (but only when required) *)
+    begin match up.heartbeat.it with
+     | Ir.PrimE (Ir.TupPrim, []) -> ()
+     | _ ->
+       Func.define_built_in env "heartbeat_exp" [] [] (fun env ->
+         compile_exp_as env ae2 SR.unit up.heartbeat);
+       IC.export_heartbeat env;
+    end;
+
     (* Export metadata *)
     env.E.stable_types :=
       Some (
@@ -8841,17 +8940,18 @@ and main_actor as_opt mod_env ds fs up =
         List.mem "candid:args" !Flags.public_metadata_names,
         up.meta.candid.args);
 
+
     (* Deserialize any arguments *)
     begin match as_opt with
-     | None
-     | Some [] ->
-       (* Liberally accept empty as well as unit argument *)
-       assert (arg_tys = []);
-       IC.system_call env "ic0" "msg_arg_data_size" ^^
-       G.if0 (Serialization.deserialize env arg_tys) G.nop
-     | Some (_ :: _) ->
-       Serialization.deserialize env arg_tys ^^
-       G.concat_map (Var.set_val env ae1) (List.rev arg_names)
+      | None
+      | Some [] ->
+        (* Liberally accept empty as well as unit argument *)
+        assert (arg_tys = []);
+        IC.system_call env "ic0" "msg_arg_data_size" ^^
+        G.if0 (Serialization.deserialize env arg_tys) G.nop
+      | Some (_ :: _) ->
+        Serialization.deserialize env arg_tys ^^
+        G.concat_map (Var.set_val env ae1) (List.rev arg_names)
     end ^^
     (* Continue with decls *)
     decls_codeW G.nop
