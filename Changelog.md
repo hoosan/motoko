@@ -1,5 +1,21 @@
 # Motoko compiler changelog
 
+## 0.6.20 (2022-01-11)
+
+* motoko
+
+  * Implement support for `heartbeat` system methods (thanks to ninegua) (#2971)
+
+* motoko-base
+
+  * Add `Iter.filter : <A>(Iter<A>, A -> Bool) -> Iter<A>` (thanks to jzxchiang1) (#328).
+
+## 0.6.19 (2022-01-05)
+
+* motoko-base
+
+  * Fixed a bug in the `RBTree.size()` method.
+
 ## 0.6.18 (2021-12-20)
 
 * moc

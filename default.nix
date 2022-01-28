@@ -158,15 +158,15 @@ rec {
       # Build Rust package cargo-vendor-tools
       cargoVendorTools = nixpkgs.rustPlatform.buildRustPackage rec {
         name = "cargo-vendor-tools";
-        src = ./rts/cargo-vendor-tools;
-        cargoSha256 = "sha256-wZeLp8s/QI8DyK7KsHAYOqskJIEleomXzQG2ijRossk";
+        src = "./rts/${name}";
+        cargoSha256 = "sha256-CrtZQTac95MEbk3uapviLgcQjEt5VUnTOG9fiJXIAU8";
       };
 
       # Path to vendor-rust-std-deps, provided by cargo-vendor-tools
       vendorRustStdDeps = "${cargoVendorTools}/bin/vendor-rust-std-deps";
 
       # SHA256 of Rust std deps
-      rustStdDepsHash = "sha256-jCe1HXSexW6p8QINrMtcBDO1TDWkg2glZwnf1EqLuB0";
+      rustStdDepsHash = "sha256:06rb75ydzfk9msx4rawn7vm1md8p32lirkyfymws7w10zka3h6qs";
 
       # Vendor directory for Rust std deps
       rustStdDeps = nixpkgs.stdenvNoCC.mkDerivation {
@@ -192,7 +192,7 @@ rec {
         name = "motoko-rts-deps";
         src = subpath ./rts;
         sourceRoot = "rts/motoko-rts-tests";
-        sha256 = "0xalgx3agd4kz6dzifc4kaqxfd0gl0k5qxxgia3phkldm1za95wr";
+        sha256 = "sha256-VKNXQ7uT5njmZ4RlF1Lebyy7hPSw+KRjG8ntCXfw/Y4";
         copyLockfile = true;
       };
 
@@ -318,7 +318,7 @@ rec {
         src = test_src dir;
         buildInputs =
           deps ++
-          (with nixpkgs; [ wabt bash perl getconf moreutils nodejs-10_x sources.esm ]) ++
+          (with nixpkgs; [ wabt bash perl getconf moreutils nodejs-16_x sources.esm ]) ++
           [ filecheck
             wasmtime
           ] ++
@@ -465,7 +465,7 @@ rec {
         buildInputs = commonBuildInputs nixpkgs ++ [
           nixpkgs.ocamlPackages.js_of_ocaml
           nixpkgs.ocamlPackages.js_of_ocaml-ppx
-          nixpkgs.nodejs-10_x
+          nixpkgs.nodejs-16_x
         ];
         buildPhase = ''
           patchShebangs .
@@ -482,7 +482,7 @@ rec {
         doInstallCheck = true;
         test = ./test + "/test-${n}.js";
         installCheckPhase = ''
-          NODE_PATH=$out/bin node --experimental-wasm-mut-global --experimental-wasm-mv $test
+          NODE_PATH=$out/bin node $test
         '';
       };
     in

@@ -27,10 +27,10 @@
         "homepage": "",
         "owner": "dfinity",
         "repo": "ic",
-        "rev": "391fd19f2154471f01068aaa771084eac010a099",
-        "sha256": "0mcs8n0m95ndylmw1z0mfj0x2r808aiy679wm2q2f9vh9brqyfc5",
+        "rev": "b1fa6ab6775411c2733f044c0f67d89aae78a9b0",
+        "sha256": "0459x15g1sfi2b6kyas8h0wgmvy866ii6i4q0hgnc2gcbpj55j86",
         "type": "tarball",
-        "url": "https://github.com/dfinity/ic/archive/391fd19f2154471f01068aaa771084eac010a099.tar.gz",
+        "url": "https://github.com/dfinity/ic/archive/b1fa6ab6775411c2733f044c0f67d89aae78a9b0.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "ic-hs": {
@@ -64,10 +64,10 @@
         "homepage": null,
         "owner": "dfinity",
         "repo": "motoko-base",
-        "rev": "88677de34a12cb9e23320bc2a3f3a887deebba68",
-        "sha256": "18vnhac0fsbf2rfws5lcx752xixfvvd5ggvanbcbl3r09vjyzjn0",
+        "rev": "62728e09da590bd6009fc6172f08cc286c2b1904",
+        "sha256": "1k6bg9vy9g8qxmhdq3jvpbxnfs09wf456fz769854ycwaxl7xp52",
         "type": "tarball",
-        "url": "https://github.com/dfinity/motoko-base/archive/88677de34a12cb9e23320bc2a3f3a887deebba68.tar.gz",
+        "url": "https://github.com/dfinity/motoko-base/archive/62728e09da590bd6009fc6172f08cc286c2b1904.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "motoko-matchers": {
@@ -103,10 +103,10 @@
         "homepage": null,
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b9a9a7bb967c826ebdc2df347b6af6fe6aa10e8e",
-        "sha256": "1pp06z37v2ajl27czj3kgfa007kawsqw5cmx6m72faspqcfk6bi4",
+        "rev": "d1e59cfc49961e121583abe32e2f3db1550fbcff",
+        "sha256": "03ldf1dlxqf3g8qh9x5vp6vd9zvvr481fyjds111imll69y60wpm",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/b9a9a7bb967c826ebdc2df347b6af6fe6aa10e8e.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/d1e59cfc49961e121583abe32e2f3db1550fbcff.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs-mozilla": {
