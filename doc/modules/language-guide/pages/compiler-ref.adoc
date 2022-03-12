@@ -86,7 +86,7 @@ moc [option] [file ...]
 
 |`+--package <package-name> <package-path>+` |スペースで区切られたパッケージ名とパッケージパスのペアを指定する。
 
-|`+--public-metadata <name>+` |icp のカスタムセクション <name> (cidid:args または candid:service または motoko:stable-types) を `public` として出力する (デフォルトは `private`)。
+|`+--public-metadata <name>+` |icp のカスタムセクション <name> (cidid:args または candid:service または motoko:stable-types または motoko:compiler ) を `public` として出力する (デフォルトは `private`)。
 
 |`+--print-deps+` |与えられたソースファイルの依存関係を表示する。
 

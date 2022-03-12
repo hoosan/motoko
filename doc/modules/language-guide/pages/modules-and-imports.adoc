@@ -20,6 +20,19 @@ import Result "mo:base/Result";
 
 import 宣言には、{proglang} モジュールであることを示す `+mo:+` という接頭辞が含まれており、宣言には `+.mo+` というファイルの拡張子がないことに注意してください。
 
+上記の例では、識別子を使ってモジュールを一括してインポートしていますが、
+以下のようなオブジェクトパターンの構文を用いることで、サブセットをモジュールから選択的にインポートすることもできます。
+
+Above example uses an identifier pattern to import modules wholesale, but you can also selectively import
+a subset of symbols from a module by resorting to the object pattern syntax:
+
+[source,motoko]
+----
+import { map, find, foldLeft = fold } = "mo:base/Array";
+----
+
+この例では、関数 `+map+` と `+find+` はそのままインポートされ、関数 `+foldLeft+` は `+fold+` にリネームされます。
+
 == ローカルファイルのインポート
 
 {proglang} でプログラムを書くためのもう一つの一般的なアプローチは、ソースコードを異なるモジュールに分割することです。
