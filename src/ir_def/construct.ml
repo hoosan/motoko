@@ -88,7 +88,9 @@ let primE prim es =
     | ICRejectPrim -> T.Non
     | ICCallerPrim -> T.caller
     | ICStableRead t -> t
+    | ICPerformGC
     | ICStableWrite _ -> T.unit
+    | ICStableSize _ -> T.nat64
     | IdxPrim
     | DerefArrayOffset -> T.(as_immut (as_array_sub (List.hd es).note.Note.typ))
     | NextArrayOffset _ -> T.nat
@@ -176,6 +178,14 @@ let ic_callE f e k r =
     note = Note.{ def with typ = T.unit; eff = eff }
   }
 
+let ic_call_rawE p m a k r =
+  let es = [p; m; a; k; r] in
+  let effs = List.map eff es in
+  let eff = List.fold_left max_eff T.Triv effs in
+  { it = PrimE (ICCallRawPrim, es);
+    at = no_region;
+    note = Note.{ def with typ = T.unit; eff = eff }
+  }
 
 (* tuples *)
 

@@ -580,7 +580,7 @@ let compile_op64_const op i =
     G.i (Binary (Wasm.Values.I64 op))
 let compile_add64_const = compile_op64_const I64Op.Add
 let compile_sub64_const = compile_op64_const I64Op.Sub
-let _compile_mul64_const = compile_op64_const I64Op.Mul
+let compile_mul64_const = compile_op64_const I64Op.Mul
 let _compile_divU64_const = compile_op64_const I64Op.DivU
 let compile_shrU64_const = function
   | 0L -> G.nop | n -> compile_op64_const I64Op.ShrU n
@@ -904,7 +904,8 @@ module Heap = struct
 
   let get_memory_size =
     G.i MemorySize ^^
-    compile_mul_const page_size
+    G.i (Convert (Wasm.Values.I64 I64Op.ExtendUI32)) ^^
+    compile_mul64_const page_size64
 
   let get_max_live_size env =
     E.call_import env "rts" "get_max_live_size"
@@ -2990,7 +2991,7 @@ module Blob = struct
             | LeOp -> get_a ^^ get_b ^^ G.i (Compare (Wasm.Values.I32 I32Op.LeU))
             | GeOp -> get_a ^^ get_b ^^ G.i (Compare (Wasm.Values.I32 I32Op.GeU))
             | EqOp -> Bool.lit false
-            |_ -> assert false
+            | _ -> assert false
             end ^^
             G.i Return
           )
@@ -3000,7 +3001,7 @@ module Blob = struct
         | LeOp -> get_len1 ^^ get_len2 ^^ G.i (Compare (Wasm.Values.I32 I32Op.LeU))
         | GeOp -> get_len1 ^^ get_len2 ^^ G.i (Compare (Wasm.Values.I32 I32Op.GeU))
         | EqOp -> Bool.lit true
-        |_ -> assert false
+        | _ -> assert false
       end
   )
 
@@ -3669,7 +3670,7 @@ module IC = struct
         (fun env -> system_call env "ic0" "msg_caller_copy")
         (fun env -> compile_unboxed_const 0l)
     | _ ->
-      E.trap_with env (Printf.sprintf "cannot get caller  when running locally")
+      E.trap_with env (Printf.sprintf "cannot get caller when running locally")
 
   let reject env arg_instrs =
     match E.mode env with
@@ -4386,14 +4387,15 @@ module Serialization = struct
     (fun env get_x ->
 
       (* Some combinators for writing values *)
-      let (set_data_size, get_data_size) = new_local env "data_size" in
+      let (set_data_size, get_data_size) = new_local64 env "data_size" in
       let (set_ref_size, get_ref_size) = new_local env "ref_size" in
-      compile_unboxed_const 0l ^^ set_data_size ^^
+      compile_const_64 0L ^^ set_data_size ^^
       compile_unboxed_const 0l ^^ set_ref_size ^^
 
       let inc_data_size code =
-        get_data_size ^^ code ^^
-        G.i (Binary (Wasm.Values.I32 I32Op.Add)) ^^
+        get_data_size ^^
+        code ^^ G.i (Convert (Wasm.Values.I64 I64Op.ExtendUI32)) ^^
+        G.i (Binary (Wasm.Values.I64 I64Op.Add)) ^^
         set_data_size
       in
 
@@ -4404,9 +4406,10 @@ module Serialization = struct
       in
 
       let size env t =
+        let (set_inc, get_inc) = new_local env "inc" in
         buffer_size env t ^^
         get_ref_size ^^ G.i (Binary (Wasm.Values.I32 I32Op.Add)) ^^ set_ref_size ^^
-        get_data_size ^^ G.i (Binary (Wasm.Values.I32 I32Op.Add)) ^^ set_data_size
+        set_inc ^^ inc_data_size get_inc
       in
 
       let size_alias size_thing =
@@ -4508,7 +4511,14 @@ module Serialization = struct
         size_alias (fun () -> get_x ^^ Heap.load_field MutBox.field ^^ size env t)
       | _ -> todo "buffer_size" (Arrange_ir.typ t) G.nop
       end ^^
+      (* Check 32-bit overflow of buffer_size *)
       get_data_size ^^
+      compile_shrU64_const 32L ^^
+      G.i (Test (Wasm.Values.I64 I64Op.Eqz)) ^^
+      E.else_trap_with env "buffer_size overflow" ^^
+      (* Convert to 32-bit *)
+      get_data_size ^^
+      G.i (Convert (Wasm.Values.I32 I32Op.WrapI64)) ^^
       get_ref_size
     )
 
@@ -5343,9 +5353,14 @@ module Serialization = struct
       get_x ^^
       buffer_size env (Type.seq ts) ^^
       set_refs_size ^^
-
+      (* add tydesc_len *)
       compile_add_const tydesc_len  ^^
       set_data_size ^^
+      (* check for overflow *)
+      get_data_size ^^
+      compile_unboxed_const tydesc_len ^^
+      G.i (Compare (Wasm.Values.I32 I32Op.LtU)) ^^
+      E.then_trap_with env "serialization overflow" ^^
 
       let (set_data_start, get_data_start) = new_local env "data_start" in
       let (set_refs_start, get_refs_start) = new_local env "refs_start" in
@@ -6348,8 +6363,22 @@ module FuncDec = struct
      deserialization); the reject callback function is unique.
   *)
 
-  let closures_to_reply_reject_callbacks env ts =
-    let reply_name = "@callback<" ^ Typ_hash.typ_hash (Type.Tup ts) ^ ">" in
+  let closures_to_reply_reject_callbacks_aux env ts_opt =
+    let arity, reply_name, from_arg_data =
+      match ts_opt with
+      | Some ts ->
+        (List.length ts,
+         "@callback<" ^ Typ_hash.typ_hash (Type.Tup ts) ^ ">",
+         fun env -> Serialization.deserialize env ts)
+      | None ->
+        (1,
+         "@callback",
+         (fun env ->
+           Blob.of_size_copy env
+           (fun env -> IC.system_call env "ic0" "msg_arg_data_size")
+           (fun env -> IC.system_call env "ic0" "msg_arg_data_copy")
+           (fun env -> compile_unboxed_const 0l)))
+    in
     Func.define_built_in env reply_name ["env", I32Type] [] (fun env ->
         message_start env (Type.Shared Type.Write) ^^
         (* Look up continuation *)
@@ -6360,11 +6389,11 @@ module FuncDec = struct
         set_closure ^^
         get_closure ^^
 
-        (* Deserialize reply arguments  *)
-        Serialization.deserialize env ts ^^
+        (* Deserialize/Blobify reply arguments  *)
+        from_arg_data env ^^
 
         get_closure ^^
-        Closure.call_closure env (List.length ts) 0 ^^
+        Closure.call_closure env arity 0 ^^
 
         message_cleanup env (Type.Shared Type.Write)
       );
@@ -6403,6 +6432,11 @@ module FuncDec = struct
       get_cb_index ^^
       compile_unboxed_const (E.add_fun_ptr env (E.built_in env reject_name)) ^^
       get_cb_index
+
+  let closures_to_reply_reject_callbacks env ts =
+    closures_to_reply_reject_callbacks_aux env (Some ts)
+  let closures_to_raw_reply_reject_callbacks env  =
+    closures_to_reply_reject_callbacks_aux env None
 
   let ignoring_callback env =
     (* for one-way calls, we use an invalid table entry as the callback. this
@@ -6455,6 +6489,14 @@ module FuncDec = struct
       get_meth_pair
       (closures_to_reply_reject_callbacks env ts2 [get_k; get_r])
       (fun _ -> get_arg ^^ Serialization.serialize env ts1)
+
+  let ic_call_raw env get_meth_pair get_arg get_k get_r =
+    ic_call_threaded
+      env
+      "raw call"
+      get_meth_pair
+      (closures_to_raw_reply_reject_callbacks env [get_k; get_r])
+      (fun _ -> get_arg ^^ Blob.as_ptr_len env)
 
   let ic_self_call env ts get_meth_pair get_future get_k get_r =
     ic_call_threaded
@@ -7788,6 +7830,20 @@ and compile_exp (env : E.t) ae exp =
       compile_exp_vanilla env ae e ^^
       Serialization.deserialize_from_blob false env ts
 
+    | ICPerformGC, [] ->
+      SR.unit,
+      E.collect_garbage env
+
+    | ICStableSize t, [e] ->
+      SR.UnboxedWord64,
+      let tydesc = Serialization.type_desc env [t] in
+      let tydesc_len = Int32.of_int (String.length tydesc) in
+      compile_exp_vanilla env ae e ^^
+      Serialization.buffer_size env t ^^
+      G.i Drop ^^
+      compile_add_const tydesc_len  ^^
+      G.i (Convert (Wasm.Values.I64 I64Op.ExtendUI32))
+
     (* Other prims, unary *)
 
     | OtherPrim "array_len", [e] ->
@@ -7943,7 +7999,7 @@ and compile_exp (env : E.t) ae exp =
 
     | OtherPrim "rts_memory_size", [] ->
       SR.Vanilla,
-      Heap.get_memory_size ^^ Prim.prim_word32toNat env
+      Heap.get_memory_size ^^ BigNum.from_word64 env
 
     | OtherPrim "rts_total_allocation", [] ->
       SR.Vanilla,
@@ -7972,7 +8028,7 @@ and compile_exp (env : E.t) ae exp =
 
     | OtherPrim "idlHash", [e] ->
       SR.Vanilla,
-      E.trap_with env "idlHash only implemented in interpreter "
+      E.trap_with env "idlHash only implemented in interpreter"
 
 
     | OtherPrim "popcnt8", [e] ->
@@ -8220,7 +8276,21 @@ and compile_exp (env : E.t) ae exp =
       compile_exp_vanilla env ae r ^^ set_r ^^
       FuncDec.ic_call env ts1 ts2 get_meth_pair get_arg get_k get_r add_cycles
       end
-
+    | ICCallRawPrim, [p;m;a;k;r] ->
+      SR.unit, begin
+      let (set_meth_pair, get_meth_pair) = new_local env "meth_pair" in
+      let (set_arg, get_arg) = new_local env "arg" in
+      let (set_k, get_k) = new_local env "k" in
+      let (set_r, get_r) = new_local env "r" in
+      let add_cycles = Internals.add_cycles env ae in
+      compile_exp_vanilla env ae p ^^
+      compile_exp_vanilla env ae m ^^ Text.to_blob env ^^
+      Tuple.from_stack env 2 ^^ set_meth_pair ^^
+      compile_exp_vanilla env ae a ^^ set_arg ^^
+      compile_exp_vanilla env ae k ^^ set_k ^^
+      compile_exp_vanilla env ae r ^^ set_r ^^
+      FuncDec.ic_call_raw env get_meth_pair get_arg get_k get_r add_cycles
+      end
     | ICStableRead ty, [] ->
       (*
         * On initial install:
@@ -8890,7 +8960,6 @@ and main_actor as_opt mod_env ds fs up =
     let ae0 = VarEnv.empty_ae in
 
     let captured = Freevars.captured_vars (Freevars.actor ds fs up) in
-
     (* Add any params to the environment *)
     (* Captured ones need to go into static memory, the rest into locals *)
     let args = match as_opt with None -> [] | Some as_ -> as_ in
@@ -9036,6 +9105,9 @@ and conclude_module env start_fi_o =
       motoko = {
         labels = E.get_labs env;
         stable_types = !(env.E.stable_types);
+        compiler = Some
+         (List.mem "motoko:compiler" !Flags.public_metadata_names,
+          Lib.Option.get Source_id.release Source_id.id)
       };
       candid = {
         args = !(env.E.args);
