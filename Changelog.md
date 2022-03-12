@@ -1,5 +1,53 @@
 # Motoko compiler changelog
 
+## 0.6.25 (2022-03-07)
+
+* motoko (`moc`)
+
+  * bugfix: fix bogus elision of type constructors sharing names with primitive types in --stable-types section and .most file (#3140)
+
+## 0.6.24 (2022-03-06)
+
+* motoko (`moc`)
+
+  * bugfix: fix bogus identification of distinct type constructors
+    in --stable-types section and .most file (#3140)
+
+## 0.6.23 (2022-03-05)
+
+* motoko (`moc`)
+
+  * bugfix: fix pretty printing of (stable) types and #3128 (#3130)
+
+    * Collect constructors  *transitively* before emitting a .most file.
+    * Modifies type pretty printer to produce well-formed types and stable type signatures.
+
+## 0.6.22 (2022-02-24)
+
+* motoko (`moc`)
+
+  * Fix: remove bogus error when transitively importing module with
+    selective field imports (#3121)
+  * Fix: Treating eponymous types from separate candid files (#3103)
+
+* Various reports from CI are now pushed to
+  https://dfinity.github.io/motoko (#3113)
+
+## 0.6.21 (2022-01-31)
+
+* motoko (`moc`)
+
+  * Emit new ICP metadata custom section 'motoko:compiler' with compiler release or revision in UTF8 (e.g. "0.6.21"). Default is `icp:private` (#3091).
+  * Generalized `import` supporting pattern matching and selective field imports (#3076).
+  * Fix: insert critical overflow checks preventing rare heap corruptions
+    in out-of-memory allocation and stable variable serialization (#3077).
+  * Implement support for 128-bit Cycles-API (#3042).
+
+* motoko-base
+
+  * `ExperimentalInternetComputer` library, exposing low-level, binary `call` function (a.k.a. "raw calls") (dfinity/motoko-base#334, Motoko #3806).
+  * `Principal.fromBlob` added (dfinity/motoko-base#331).
+
 ## 0.6.20 (2022-01-11)
 
 * motoko
@@ -8,7 +56,7 @@
 
 * motoko-base
 
-  * Add `Iter.filter : <A>(Iter<A>, A -> Bool) -> Iter<A>` (thanks to jzxchiang1) (#328).
+  * Add `Iter.filter : <A>(Iter<A>, A -> Bool) -> Iter<A>` (thanks to jzxchiang1) (dfinity/motoko-base#328).
 
 ## 0.6.19 (2022-01-05)
 
@@ -151,7 +199,7 @@
 
 * motoko-base
 
-  * add Debug.trap : Text -> None (#288)
+  * add Debug.trap : Text -> None (dfinity/motoko-base#288)
 
 ## 0.6.8 (2021-09-06)
 
@@ -170,7 +218,7 @@
 
 * motoko-base:
 
-  * Fix bug in `AssocList.diff` (#277)
+  * Fix bug in `AssocList.diff` (dfinity/motoko-base#277)
   * Deprecate unsafe or redundant functions in library `Option` ( `unwrap`, `assertSome`, `assertNull`) (#275)
 
 ## 0.6.6 (2021-07-30)
