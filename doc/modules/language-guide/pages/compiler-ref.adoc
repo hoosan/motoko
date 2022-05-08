@@ -88,6 +88,8 @@ moc [option] [file ...]
 
 |`+--public-metadata <name>+` |icp のカスタムセクション <name> (cidid:args または candid:service または motoko:stable-types または motoko:compiler ) を `public` として出力する (デフォルトは `private`)。
 
+|`+--omit-metadata <name>+` |icp のカスタムセクション <name> を省略する (candid:args または candid:service または motoko:stable-types または motoko:compiler)
+
 |`+--print-deps+` |与えられたソースファイルの依存関係を表示する。
 
 //|`+--profile+` |Activates profiling counters in interpreters.
