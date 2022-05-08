@@ -88,6 +88,8 @@ moc [option] [file ...]
 
 |`+--public-metadata <name>+` |icp のカスタムセクション <name> (cidid:args または candid:service または motoko:stable-types または motoko:compiler ) を `public` として出力する (デフォルトは `private`)。
 
+|`+--omit-metadata <name>+` |icp のカスタムセクション <name> を省略する (candid:args または candid:service または motoko:stable-types または motoko:compiler)
+
 |`+--print-deps+` |与えられたソースファイルの依存関係を表示する。
 
 //|`+--profile+` |Activates profiling counters in interpreters.
@@ -207,6 +209,8 @@ You can use the following options with the `+moc+` command.
 |`+--package <package-name> <package-path>+` |Specifies a package-name package-path pair, separated by a space.
 
 |`+--public-metadata <name>+` |Emit icp custom section <name> (candid:args or candid:service or motoko:stable-types or motoko:compiler) as `public` (default is `private`)
+
+|`+--omit-metadata <name>+` |omit icp custom section <name> (candid:args or candid:service or motoko:stable-types or motoko:compiler)
 
 |`+--print-deps+` |Prints the dependencies for a given source file.
 
