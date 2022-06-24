@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>基本的なコンセプトと用語 :: Motoko documentation</title>
+    <meta name="generator" content="Antora 2.3.4">
+<link rel="stylesheet" href="../../_/css/site.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" /><meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:title" content="The Internet Computer | Documentation" />
+<meta property="og:description" content="Documentation for the internet computer." />
+<meta property="og:image" content="../../_/img/share.jpg" />
+<meta property="og:image:url" content="../../_/img/share.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@DFINITYDev" />
+<meta name="twitter:image" content="../../_/img/logo-RGB.png" />
+<meta name="twitter:image:alt" content="DFINITY Logo" />    <link rel="icon" href="../../_/img/favicon.ico" type="image/x-icon">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="logo-container" href="https://dfinity.org/">
+        <img class="header-logo" src="../../_/img/logo.svg">
+        <h1 class="header-title">Motoko documentation</h1>
+      </a>
+    </div>
+    <div class="nav-items-wrapper">
+      <div class="search-container">
+  <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" clip-rule="evenodd"
+      d="M11.8654 12.5892C10.8213 13.4695 9.47259 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8C14 9.47209 13.4699 10.8204 12.5901 11.8643L17.3625 16.6367L16.6377 17.3615L11.8654 12.5892ZM12.9333 8C12.9333 10.7246 10.7246 12.9333 8 12.9333C5.2754 12.9333 3.06667 10.7246 3.06667 8C3.06667 5.2754 5.2754 3.06667 8 3.06667C10.7246 3.06667 12.9333 5.2754 12.9333 8Z"
+      fill="black" />
+  </svg>
+
+
+  <input class="search-input" placeholder="Search" type="search" />
+</div>      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div id="topbar-nav" class="navbar-menu">
+        <div class="navbar-end">
+          <a class="navbar-item" target="blank" href="https://forum.dfinity.org/">Forum</a>
+          <a class="navbar-item" target="blank" href="mailto:support@dfinity.org?subject=Feedback - SDK Developer Center">Email us</a>
+          <a class="navbar-item" target="blank" href="https://www.twitter.com/dfinitydev">
+            <img src="../../_/img/social/twitter-icon.svg">
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="docs" data-version="master">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-explore is-active" data-panel="explore">
+  <div class="context">
+    <span class="title">docs</span>
+    <span class="version">master</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <span class="title">docs</span>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">master</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main>
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+</nav>
+  <div class="edit-this-page"><a href="file:///build/doc/modules/language-guide/pages/basic-concepts.adoc"><svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/><path d="M0 0h24v24H0z" fill="none"/></svg></a></div>
+</div>
+<div class="main-content">
+<article class="doc">
+<h1 class="page">基本的なコンセプトと用語</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Motoko は、Actor を使った分散型プログラミングのために設計されています。</p>
+</div>
+<div class="paragraph">
+<p>Internet Computer 上で Motoko を使ってプログラミングする場合、各 <strong>Actor</strong> は Motoko、Rust、Wasm、または Wasm にコンパイルされた他の言語など、その記述言語に関わらず、Candid インターフェースを持つ <strong>Internet Computer Canister スマートコントラクト</strong> を表します。Motoko 内では、Internet Computer にデプロイされる任意の言語で書かれた Canister を指すために <strong>Actor</strong> という用語を使用します。Motoko の役割は、これらの Actor を簡単に作成し、デプロイ後にプログラムで簡単に使用できるようにすることです。</p>
+</div>
+<div class="paragraph">
+<p>Actor を使って分散型アプリケーションを書き始める前に、プログラミング言語の基本的な構成要素、特に Motoko について知っておく必要があります。
+この章では、以降のドキュメントで使用されている、Motoko を使ったプログラミングを学ぶ上で欠かせない以下のような重要な概念や用語を紹介します：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>プログラム</p>
+</li>
+<li>
+<p>宣言</p>
+</li>
+<li>
+<p>式</p>
+</li>
+<li>
+<p>値</p>
+</li>
+<li>
+<p>変数</p>
+</li>
+<li>
+<p>型</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>他の言語でのプログラミング経験がある方や、モダンプログラミング言語の理論に精通している方は、これらの用語やその使われ方に既に慣れていることでしょう。
+これらの用語の使われ方は、Motoko でも特に変わった点はありません。
+しかし、プログラミングに慣れていない方のために、このガイドでは、Actor や分散型プログラミングの使用を避けたシンプルなサンプルプログラムを用いて、これらの用語を徐々に紹介していきます。
+基本的な用語を理解した後、言語のより高度な部分を学ぶことができます。
+より高度な機能は、その複雑さに伴い、より複雑な例で説明されています。</p>
+</div>
+<div class="paragraph">
+<p>この章では、以下のトピックについて説明します：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#intro-progs">Motoko プログラムの構文</a></p>
+</li>
+<li>
+<p><a href="#intro-printing">数字のテキストの表示</a> と <a href="#intro-stdlib">標準ライブラリの使い方</a></p>
+</li>
+<li>
+<p><a href="#intro-decls-vs-exps">宣言と式</a></p>
+</li>
+<li>
+<p><a href="#intro-lexical-scoping">変数の字句スコープ</a></p>
+</li>
+<li>
+<p><a href="#intro-values">値と評価</a></p>
+</li>
+<li>
+<p><a href="#intro-type-anno">変数の型アノテーション</a></p>
+</li>
+<li>
+<p><a href="#intro-type-soundness">型健全性と型安全な評価</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="intro-progs"><a class="anchor" href="#intro-progs"></a>Motoko プログラムの構文</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>各 Motoko <em>プログラム</em> は、宣言と式を自由に組み合わせたもので、それらの構文的な分類は異なりますが、互いに関連しています（プログラムの正確な構文については、<a href="language-manual.html">言語のクイックリファレンスガイド</a>を参照して下さい）。</p>
+</div>
+<div class="paragraph">
+<p>私たちが Internet Computer 上にデプロイするプログラムでは、有効なプログラムは <em>Actor 式</em>で構成されており、<a href="actors-async.html">Actor と async データ</a>で説明するように、特定の構文(<code>actor</code> キーワード)が用いられます。</p>
+</div>
+<div class="paragraph">
+<p>議論の準備として、本章と <a href="mutable-state.html">ミュータブルなステート</a> の中で、Internet Computer の Service ではなく、Service を書くための Motoko のコードスニペットを用いて説明しています。それぞれは通常、（Service ではない） Motoko プログラムとして単独で実行することができ、場合によってはターミナルの出力をプリントすることもできます。</p>
+</div>
+<div class="paragraph">
+<p>この章の例では、四則演算などの簡単な式を使って、Motoko の基本原理を説明します。
+Motoko の全ての式の構文について知りたい方は、<a href="language-manual.html">言語のクイックリファレンス</a>を参照してください。</p>
+</div>
+<div class="paragraph">
+<p>まず初めに、次のコードスニペットは、変数 <code>x</code> と <code>y</code> の2つの宣言で構成されており、続く式で1つのプログラムを形成しています：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1;
+let y = x + 1;
+x * y + x;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>以下の議論では、この小さなプログラムの変形を使用します。</p>
+</div>
+<div class="paragraph">
+<p>まず、このプログラムの型は <code>Nat</code>（自然数）であり、実行すると <code>3</code> という自然数の値に評価されます。</p>
+</div>
+<div class="paragraph">
+<p>中括弧で囲まれたブロック（<code>do {</code> と <code>}</code>）と別の変数（<code>z</code>）を導入することで、元のプログラムを次のように修正することができます：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let z = do {
+  let x = 1;
+  let y = x + 1;
+  x * y + x
+};</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="intro-decls-exps-def"><a class="anchor" href="#intro-decls-exps-def"></a>宣言と式</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>宣言は、イミュータブル（不変）な変数、ミュータブル（可変）なステート、Actor、オブジェクト、クラス、その他の型を導入します。
+式は、これらを使った計算を記述します。</p>
+</div>
+<div class="paragraph">
+<p>ここでは、イミュータブルな変数を宣言し、簡単な演算を行うプログラムを例に説明します。</p>
+</div>
+<div class="sect2">
+<h3 id="intro-decls-vs-exps"><a class="anchor" href="#intro-decls-vs-exps"></a>宣言と式の違い</h3>
+<div class="paragraph">
+<p>各 Motoko <em>プログラム</em> は、宣言と式を自由に組み合わせたもので、それらの構文的な分類は異なるものの互いに関連しているということを<a href="#intro-progs">思い出しましょう</a>。
+この章では、例を使って宣言と式の区別を説明し、それらを混在させて使うことに慣れていきます。</p>
+</div>
+<div class="paragraph">
+<p>上で最初に紹介したサンプルプログラムを思い出しましょう：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1;
+let y = x + 1;
+x * y + x;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>実際のところ、このプログラムは以下の <em>3</em> 個の宣言からなる <em>宣言のリスト</em> です：</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>宣言 <code>let x = 1;</code> によるイミュータブルな変数 <code>x</code> と、</p>
+</li>
+<li>
+<p>宣言 <code>let y = x + 1;</code> によるイミュータブルな変数 <code>y</code> と、</p>
+</li>
+<li>
+<p>最終的な式の値である <code>x * y + x</code> を保持する <em>匿名の 暗黙的変数</em>。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>この式 <code>x * y + x</code> は、より一般的な原理を示しています。
+それぞれの式は、その式の結果の値で無名変数を暗黙的に宣言しているので、必要に応じて宣言と考えることができます。</p>
+</div>
+<div class="paragraph">
+<p>式が最後の宣言として現れる場合、式は任意の型を持つことができます。ここでは、式 <code>x * y + x</code> の型は <code>Nat</code> です。</p>
+</div>
+<div class="paragraph">
+<p>式が宣言リストの最後ではなく、宣言リストの中にある場合は、式はユニット型 <code>()</code> でなければなりません。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_宣言リストにおけるユニット型でない式の無視"><a class="anchor" href="#_宣言リストにおけるユニット型でない式の無視"></a>宣言リストにおけるユニット型でない式の無視</h3>
+<div class="paragraph">
+<p>このユニット型でなければならないという制限は、<code>ignore</code> を明示的に使用して、使用されていない結果の値を無視することで切り抜けることができます。
+例えば、以下のようになります：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1;
+ignore(x + 42);
+let y = x + 1;
+ignore(y * 42);
+x * y + x;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_宣言と変数の代入"><a class="anchor" href="#_宣言と変数の代入"></a>宣言と変数の代入</h3>
+<div class="paragraph">
+<p>宣言は相互再帰可能ですが、そうでない書き方のために代入セマンティクスを使うことができます（高校数学における式の単純化でおなじみの、等式を別の等式に代入すること。)</p>
+</div>
+<div class="paragraph">
+<p>元の例を思い出してみましょう：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1;
+let y = x + 1;
+x * y + x;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>変数の宣言値をそれぞれの出現箇所に <em>代入</em> することで、上のプログラムを手動で書き換えることができます。
+そうすることで次のような式になり、これも有効なプログラムです。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">1 * (1 + 1) + 1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>上の式も、元のプログラムと同じ型で、同じ動作（結果値 <code>3</code>）をする有効なプログラムです。
+また、ブロックを使って一つの式を形成することもできます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_宣言からブロック式への変換"><a class="anchor" href="#_宣言からブロック式への変換"></a>宣言からブロック式への変換</h3>
+<div class="paragraph">
+<p>上記のプログラムの多くは、先ほどの例のように宣言のリストで構成されています：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1;
+let y = x + 1;
+x * y + x</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>宣言リストそれ自体は <em>式</em> ではないので、その最終値（<code>3</code>）を使って別の変数を（すぐに）宣言することはできません。</p>
+</div>
+<div id="intro-exp-block" class="paragraph">
+<p><strong>ブロック式</strong>：この宣言リストを <em>中括弧</em> で囲むことで、<em>ブロック式</em> を形成することができます。ブロックは、<code>if</code>、<code>loop</code>、<code>case</code> などの制御フローのサブ式としてのみ使用できます。それ以外の場所では、<code>do { &#8230;&#8203; }</code> を使ってブロック式を表現し、ブロックをオブジェクトリテラルと区別しています。例えば、<code>do {}</code> は <code>()</code> 型の空のブロックで、<code>{}</code> は <code>{}</code> 型の空のレコードです。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">do {
+  let x = 1;
+  let y = x + 1;
+  x * y + x
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>これも有効なプログラムですが、宣言された変数 <code>x</code> と <code>y</code> が、導入したブロック内のプライベートスコープになっています。</p>
+</div>
+<div class="paragraph">
+<p>このブロック形式は、宣言リストとその <em>変数名の選択</em> の自律性を維持するのに役立ちます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="intro-lexical-scoping"><a class="anchor" href="#intro-lexical-scoping"></a>宣言は <strong>字句スコープ</strong> に従う</h3>
+<div class="paragraph">
+<p>上の例では、ブロックを入れ子にすることで、それぞれの宣言リストとその変数名の選択の自律性が保たれることを説明しました。
+言語理論家はこの考え方を <em>字句スコープ</em> と呼んでいます。
+つまり、変数のスコープはネストしても構わないが、ネストする際に干渉してはいけないということです。</p>
+</div>
+<div class="paragraph">
+<p>例えば、次の（ブロックの外の）プログラムは、2 ではなく 42 と評価されます。なぜなら、最後の行で出現する <code>x</code> と <code>y</code> は、囲まれたブロック内の定義ではなく、<em>最初の行の</em> 定義を参照しているからです。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 40; let y = 2;
+ignore do {
+  let x = 1;
+  let y = x + 1;
+  x * y + x
+};
+x + y</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>字句スコープを持たない他の言語では、このプログラムは異なる結果となるかもしれません。
+しかし、モダンな言語では普遍的に字句スコープが好まれています。</p>
+</div>
+<div class="paragraph">
+<p>数学的な明快さはさておき、字句スコープの実用的な利点は <em>安全性</em> であり、組成的に安全なシステムを構築する際に使用されます。
+具体的には、Motoko は非常に強力な構成上の特性を持っています。例えば、信頼していないプログラムの中に自分のプログラムを入れ子にしても、入れ子の外のプログラムが、あなたの変数を恣意的に異なる意味に再定義することはできません。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="intro-values"><a class="anchor" href="#intro-values"></a>値と評価</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>ひとたび Motoko の式がプログラムの制御の（シングル）スレッドを受け取ると、<em>結果の値</em> になるまで張り切って評価します。</p>
+</div>
+<div class="paragraph">
+<p>その際、一般的には <em>環境側の制御スタック</em> からの制御を放棄する前に、サブ式やサブルーチンに制御を渡します。</p>
+</div>
+<div class="paragraph">
+<p>もしこの式が値の形式に到達しない場合、式は無限に評価され続けます。
+後ほど再帰関数や命令型制御フローを紹介しますが、これらはいずれも終了しない処理を許容するものです。
+ここでは、結果として値が得られる、終了するプログラムのみを考えます。</p>
+</div>
+<div class="paragraph">
+<p>上の例では、自然数を生成する式に焦点を当てて説明しました。
+言語のより広範な概要として、以下に他の値の形式について簡単にまとめます：</p>
+</div>
+<div class="sect2">
+<h3 id="_プリミティブな値"><a class="anchor" href="#_プリミティブな値"></a>プリミティブな値</h3>
+<div class="paragraph">
+<p>Motoko では、以下のプリミティブな値の形式を利用することができます：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>ブール値 (<code>true</code> と <code>false</code>).</p>
+</li>
+<li>
+<p>整数 (&#8230;&#8203;,<code>-2</code>, <code>-1</code>, <code>0</code>, <code>1</code>, <code>2</code>, &#8230;&#8203;) - 制限付き整数と <em>制限なし</em> 整数</p>
+</li>
+<li>
+<p>自然数 (<code>0</code>, <code>1</code>, <code>2</code>, &#8230;&#8203;) - 制限付き自然数と <em>制限なし</em> 自然数</p>
+</li>
+<li>
+<p>テキスト値 - ユニコード文字の文字列</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>デフォルトでは、<strong>整数</strong> と <strong>自然数</strong> は <em>制限なし</em> で、オーバーフローしません。
+その代わり、いかなる有限の数にも対応できるように、伸長する表現を使用しています。</p>
+</div>
+<div class="paragraph">
+<p>実用性の観点から、Motoko には、デフォルトの制限なし数値とは別に、整数や自然数の <em>制限付き</em> の型も含まれています。
+それぞれの制限付き数値の型は、固定長（<code>8</code>, <code>16</code>, <code>32</code>, <code>64</code> のいずれか）を持ち、それぞれに &#8220;オーバーフロー&#8221; の可能性があります。このイベントが発生するとエラーとなり、<a href="#overview-traps">プログラムはトラップします</a>。</p>
+</div>
+<div class="paragraph">
+<p>Motoko では、明示的に <em>ラッピング</em> 操作（演算子の中の <code>%</code> 文字で示されます）を行う場合などの十分に定義された状況を除いて、チェック・キャッチできないオーバーフローはありません。
+Motoko では、さまざまな数値表現を変換するためのプリミティブな組み込み関数が用意されています。</p>
+</div>
+<div class="paragraph">
+<p><a href="language-manual.html">言語のクイックリファレンス</a>は、<a href="language-manual.html#primitive-types">プリミティブ型</a>の完全なリストを提供しています。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_非プリミティブな値"><a class="anchor" href="#_非プリミティブな値"></a>非プリミティブな値</h3>
+<div class="paragraph">
+<p>Motoko では、上記のプリミティブな値と型に加えて、ユーザー定義の型や、以下の非プリミティブな値の形式とそれに関連する型を利用することができます。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="language-manual.html#exp-tuple">タプル</a>（ユニット値である "空のタプル" を含む）</p>
+</li>
+<li>
+<p><a href="language-manual.html#exp-arrays">配列</a>（イミュータブルな配列とミュータブルな配列の両方）</p>
+</li>
+<li>
+<p><a href="language-manual.html#exp-object">オブジェクト</a>（匿名の順序なしフィールドとメソッドを含む）</p>
+</li>
+<li>
+<p><a href="language-manual.html#variant-types">バリアント</a>（名前付きコンストラクタとオプショナルのペイロード値を含む）</p>
+</li>
+<li>
+<p><a href="language-manual.html#exp-func">関数値</a>（<a href="sharing.html">shared 関数</a>を含む）</p>
+</li>
+<li>
+<p><a href="language-manual.html#exp-async">Async 値</a>（<em>promise</em> や <em>future</em> としても知られる）</p>
+</li>
+<li>
+<p><a href="language-manual.html#type-Error">エラー値</a>（例外やシステム障害のペイロードを運ぶ）</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>これらの形式の使用については後の章で説明します。
+プリミティブな値と非プリミティブな値の正確な言語定義については、<a href="language-manual.html#exp-error">言語のクイックリファレンス</a>を参照してください。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="intro-unit-type"><a class="anchor" href="#intro-unit-type"></a><strong>unit型</strong> vs <code>void型</code></h3>
+<div class="paragraph">
+<p>Motoko には <code>void</code> という名前の型はありません。
+Java や C++ などの言語を使っていて、返り値の型が &#8220;void&#8221; だと思っている読者も多いと思いますが、代わりに <code>()</code> と書かれた <em>ユニット型</em> を思い浮かべるようにしてみてください。</p>
+</div>
+<div class="paragraph">
+<p>実用的には、<code>void</code> と同様に、ユニット値は一般的に表現上のコストがありません。</p>
+</div>
+<div class="paragraph">
+<p><code>void</code> 型とは異なり、ユニット値は <em>存在します</em> が、<code>void</code> 型の返り値と同様、ユニット値は内部的には何の値も持たず、<em>情報</em> は常にゼロです。</p>
+</div>
+<div class="paragraph">
+<p>ユニット値を数学的に考えるもう一つの方法は、要素を持たないタプル（"nullary" ならぬ &#8220;zero-ary&#8221;）です。このようなプロパティを持つ値は1つしかないので、数学的に一意であり、よって実行時に表現する必要はありません。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_自然数"><a class="anchor" href="#_自然数"></a>自然数</h3>
+<div class="paragraph">
+<p>この型のメンバは、通常の値である <code>0</code>, <code>1</code>, <code>2</code>, &#8230;&#8203; で構成されていますが、数学のように <code>Nat</code> が特別な最大サイズに制限されることはありません。
+これらの値のランタイム表現は任意の大きさの数値に対応しており、"オーバーフロー" を（ほぼ）不可能にしています。
+（<em>ほぼ</em> 不可能というのは、プログラムのメモリが足りなくなるのと同じことで、極端な状況下ではプログラムによっては常に起こりうることだからです。)</p>
+</div>
+<div class="paragraph">
+<p>Motoko では、通常の算術演算が可能です。
+例として、次のようなプログラムを考えてみましょう：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 42 + (1 * 37) / 12: Nat</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>このプログラムは <code>Nat</code> 型の値 <code>45</code> と評価されます。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="intro-type-soundness"><a class="anchor" href="#intro-type-soundness"></a>型の健全性</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>各 Motoko の式に対して型チェックが行われることを、<em>正しく型付けされている</em> と呼んでいます。Motokoの式の <em>型</em> は、プログラムが実行されたときの将来の動作についての、言語から開発者への約束事の役割を果たします。</p>
+</div>
+<div class="paragraph">
+<p>まず、正しく型付けされたプログラムは、未定義の動作をすることなく評価されます。
+これには、<code>正しく型付けされたプログラムは間違いを起こさない</code> という言葉が当てはまります。
+この言葉の深い意味を知らない人のために補足すると、意味のある（曖昧さのない）プログラムには厳密な（概念としての）空間があり、型システムはその空間の中に留まることを強制しているため、すべての正しく型付けされたプログラムは、正確な（曖昧さのない）意味を持っているということです。</p>
+</div>
+<div class="paragraph">
+<p>さらに言えば、型はプログラムの結果を正確に予測します。
+制御を得れば、プログラムは元のプログラムの結果の型と一致する <em>結果の値</em> を生成します。</p>
+</div>
+<div class="paragraph">
+<p>いずれにしても、プログラムの静的な見方と動的な見方は、静的な型システムによってリンクされ、互いに一致します。
+この静的な見方と動的な見方の一致は静的な型システムの中心的な原理であり、設計の中核的な側面として Motoko によって提供されています。</p>
+</div>
+<div class="paragraph">
+<p>この型システムは、非同期のインタラクションがプログラムの静的・動的な見方が一致していること、そして "ボンネットの下で（内部で）" 生成された結果のメッセージが実行時に不一致にならないことも強制します。
+この一致は、型付けされた言語で通常期待される、呼び出し元と呼び出された側の引数の型や返り値の型が一致することと、その精神が似ています。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="intro-type-anno"><a class="anchor" href="#intro-type-anno"></a>型アノテーションと変数</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>変数は、（静的な）名前や（静的な）型と、実行時にのみ存在する（動的な）値を関連付けます。</p>
+</div>
+<div class="paragraph">
+<p>この意味で、Motoko の型は、プログラムのソースコードの中で、<em>コンパイラが検証した信頼できるドキュメント</em> を提供します。</p>
+</div>
+<div class="paragraph">
+<p>以下の非常に短いプログラムを考えてみましょう：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x : Nat = 1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>この例では、コンパイラは式 <code>1</code> が <code>Nat</code> 型であり、<code>x</code> も同じ型であることを推定します。</p>
+</div>
+<div class="paragraph">
+<p>この場合、プログラムの意味を変えることなく、この型アノテーションを省略することができます：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x = 1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>演算子のオーバーロードを伴うような難解な状況を除いて、型アノテーションは（通常は）実行中のプログラムの意味に影響を与えません。</p>
+</div>
+<div class="paragraph">
+<p>型アノテーションが省略された状態でコンパイルが通った場合、上記のケースのように、プログラムは元のプログラムと同じ意味（同じ <em>動作</em> ）となります。</p>
+</div>
+<div class="paragraph">
+<p>しかし、コンパイラが他の前提条件を推測したり、プログラム全体をチェックしたりするために、型アノテーションが必要になることがあります。</p>
+</div>
+<div class="paragraph">
+<p>型アノテーションを追加してもコンパイルが通る場合、追加された型アノテーションは既存の型アノテーションと <em>矛盾がない</em> ことがわかります。</p>
+</div>
+<div class="paragraph">
+<p>例えば、（必須ではない）型アノテーションを追加することで、コンパイラはすべての型アノテーションと他の推論された事実が全体として一致していることをチェックします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x : Nat = 1 : Nat</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>しかし、アノテーションの型と <em>矛盾すること</em> をしようとすると、タイプチェッカーはエラーを知らせます。</p>
+</div>
+<div class="paragraph">
+<p>以下のような、正しく型付けされていないプログラムを考えましょう：</p>
+</div>
+<div class="listingblock run">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let x : Text = 1 + 1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>1 + 1</code> の型は <code>Nat</code> であって <code>Text</code> ではなく、また <code>Nat</code> と <code>Text</code> はサブタイプの関係にないので、型アノテーションの <code>Text</code> はその後のプログラムと一致しません。
+結果的に、このプログラムは正しく型付けされておらず、コンパイラはエラーメッセージとエラー箇所を知らせ、コンパイルも実行もしません。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_型のエラーとメッセージ"><a class="anchor" href="#_型のエラーとメッセージ"></a>型のエラーとメッセージ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>数学的には、Motoko の型システムは <em>宣言的</em> であり、形式論理の概念として実装とは無関係に存在しています。
+同様に、言語定義の他の重要な側面（例：実行セマンティクス）も、実装の外に存在しています。</p>
+</div>
+<div class="paragraph">
+<p>しかし、この論理定義を設計し、試し、間違いを犯す練習をするために、私たちはこの型システムと対話し、その過程でたくさんの無害な間違いを犯したいのです。</p>
+</div>
+<div class="paragraph">
+<p><em>タイプチェッカー</em> のエラーメッセージは、開発者が型システムの論理を誤解したり、あるいは適用を誤ったりしたときに開発者を助けようとするもので、本書では間接的に説明されています。</p>
+</div>
+<div class="paragraph">
+<p>これらのエラーメッセージは時間の経過とともに改善されていくため、このドキュメントでは特定のエラーメッセージを記載していません。
+その代わりに、各コード例をその周辺の文章で説明するようにしています。</p>
+</div>
+<div class="sect2">
+<h3 id="intro-stdlib"><a class="anchor" href="#intro-stdlib"></a>Motoko 標準ライブラリの使い方</h3>
+<div class="paragraph">
+<p>言語のエンジニアリングにおけるさまざまな実用上の理由から、Motoko の設計では組み込みの型や操作を最小限に抑えるようにしています。</p>
+</div>
+<div class="paragraph">
+<p>その代わり、Motoko 標準ライブラリは、言語を完全なものにするための型や操作を可能な限り提供しています。
+<em><strong>ただし</strong>、この標準ライブラリは開発中であり、まだ不完全です。</em></p>
+</div>
+<div class="paragraph">
+<p><a href="base-libraries/stdlib-intro.html">Motoko 標準ライブラリ</a>では、Motoko 標準ライブラリからのモジュールを <em>選定して</em> 示していますが、これは例題で使われているコアな機能に焦点を当てたもので、抜本的な変更はないと考えられます。
+しかし、これらの標準ライブラリの API はすべて時間の経過とともに（程度の差こそあれ）確実に変化し、特にサイズと数が大きくなっていくでしょう。</p>
+</div>
+<div class="paragraph">
+<p>標準ライブラリからインポートするには、<code>import</code> キーワードを使います。
+導入するローカルモジュールの名前、この例では &#8220;<strong>D</strong>ebug&#8221; を表す <code>D</code> と、<code>import</code> 宣言がインポートされたモジュールを見つけるための URL を指定します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import D "mo:base/Debug";
+D.print("hello world");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>ここでは、Motoko のコードを（他のモジュール形式ではなく）、<code>mo:</code> という接頭辞でインポートします。
+<code>base/</code> のパスを指定し、その後にモジュールのファイル名 <code>Debug.mo</code> から拡張子を除いたものを指定します。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="intro-printing"><a class="anchor" href="#intro-printing"></a><code>Debug.print</code> と <code>debug_show</code> を使った出力</h3>
+<div class="paragraph">
+<p>上の例では、ライブラリ <code>Debug.mo</code> の関数 <code>print</code> を使ってテキスト文字列を出力しています：</p>
+</div>
+<div class="listingblock no-repl">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">print: Text -&gt; ()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>print</code> 関数は、入力として（<code>Text</code> 型の）テキストの文字列を受け取り、出力として（<em>ユニット型</em> または <code>()</code> の） <em>ユニット値</em> を生成します。</p>
+</div>
+<div class="paragraph">
+<p>ユニット値は情報を持たないので、ユニット型の値はすべて同一であり、<code>print</code> 関数は実際には何の結果も生み出しません。結果の代わりに <em>副作用</em> を伴います。
+<code>print</code> 関数は、人間が読める形式のテキスト文字列を出力端末に出力するという効果があります。出力したり、ステートを変更したりするような副作用のある関数は、しばしば <em>非純粋関数</em> と呼ばれます。一方、副作用を伴わずに値を返すだけの関数は、<em>純粋関数</em> と呼ばれます。
+返り値（ユニット値）については<a href="#intro-unit-type">以下で詳しく</a>説明し、<code>void</code> 型のコンセプトに慣れている読者のために、<code>void</code> 型との関連性についても述べます。</p>
+</div>
+<div class="paragraph">
+<p>最後になりますが、ほとんどの Motoko の値はデバッグ用に人間が読めるテキスト文字列に変換することができ、それらの変換を自分で書く必要は <em>ありません</em> 。</p>
+</div>
+<div class="paragraph">
+<p><code>debug_show</code> プリミティブは、大規模なクラスの値を <code>Text</code> 型の値に変換することができます。</p>
+</div>
+<div class="paragraph">
+<p>例えば、（<code>(Text, Nat, Text)</code> 型の）トリプルを、独自の変換関数を自分で書かずに、デバッグ用のテキストに変換することができます：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import D "mo:base/Debug";
+D.print(debug_show(("hello", 42, "world")))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>これらのテキスト変換を使用して、プログラムを試す際にほとんどの Motoko データを出力することができます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_不完全なコードへの対応"><a class="anchor" href="#_不完全なコードへの対応"></a>不完全なコードへの対応</h3>
+<div class="paragraph">
+<p>プログラムを書いている最中に、完成前のコードや、いくつかの実行パスが見つからないか無効な状態のコードを実行したいと思うことがあります。</p>
+</div>
+<div class="paragraph">
+<p>このような状況に対応するために、標準ライブラリである <code>Prelude</code> の <code>xxx</code>, <code>nyi</code>, <code>unreachable</code> 関数を、後述のように使用することができます。
+それぞれの関数は、以下に説明する <a href="#overview-traps">一般的なトラップメカニズム</a> をラップしています。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_短期的な穴を埋める"><a class="anchor" href="#_短期的な穴を埋める"></a>短期的な穴を埋める</h3>
+<div class="paragraph">
+<p>プログラム上に開いた短期的な穴（式の欠落）は、ソースリポジトリにコミットされることはなく、まだプログラムを書いている開発者の開発セッションでのみ存在します。</p>
+</div>
+<div class="paragraph">
+<p>次のように Prelude をインポートしていたと仮定します：</p>
+</div>
+<div id="prelude" class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import P "mo:base/Prelude";</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>開発者は、次のようにして <em>欠けている式</em> を埋めることができます：</p>
+</div>
+<div class="listingblock include_prelude">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">P.xxx()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>その結果、この式が実行された場合には、コンパイル時に <em>常に</em> 型チェックが行われ、実行時に <em>常に</em> トラップが行われます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_長期的な穴を文書化する"><a class="anchor" href="#_長期的な穴を文書化する"></a>長期的な穴を文書化する</h3>
+<div class="paragraph">
+<p>慣習的に、長期的な穴は「まだ実装されていない」（<code>nyi: not yet implimented</code>）機能とみなされ、Prelude モジュールの似たような関数を使ってマークすることができます。</p>
+</div>
+<div class="listingblock include_prelude">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">P.nyi()</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_到達不可能な_コードパスを文書化する"><a class="anchor" href="#_到達不可能な_コードパスを文書化する"></a><code>到達不可能な</code> コードパスを文書化する</h3>
+<div class="paragraph">
+<p>上記の状況とは対照的に、プログラムの不変条件における内部論理の一貫性を仮定すると、
+コードが評価されることが <em>決してない</em> ので、コードは <em>決して埋められない</em> という場面もあります。</p>
+</div>
+<div class="paragraph">
+<p>コードパスを、論理的に不可能あるいは <em>到達不可能</em> なものとして記録するには、標準ライブラリの関数である <code>unreachable</code> を使います：</p>
+</div>
+<div class="listingblock include_prelude">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">P.unreachable()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>上記の状況と同様に、この関数はいかなる前後関係でも型チェックを行い、評価されるといかなる前後関係でもトラップを行います。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="overview-traps"><a class="anchor" href="#overview-traps"></a>実行の失敗によるトラップ</h3>
+<div class="paragraph">
+<p>ゼロ除算、配列の範囲外へのアクセス、パターンマッチの失敗などのエラーは型システムでは防ぐことができませんが、実行時に <em>トラップ</em> と呼ばれるエラーを引き起こす可能性があります。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">1/0; // ゼロ除算によるトラップ</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let a = ["hello", "world"];
+a[2]; // 配列の範囲外へのアクセスによるトラップ</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let true = false; // パターンマッチの失敗</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>コードの実行がトラップを引き起こしたとき、コードが <em>トラップした</em> と言います。</p>
+</div>
+<div class="paragraph">
+<p>コードの実行は最初のトラップで中断され、以降は実行されません。</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Actor メッセージ内で発生するトラップは少し微妙です。Actor 全体を中止するのではなく、特定のメッセージの進行を妨げ、まだコミットされていないステートの変更をロールバックします。Actor 上の他のメッセージは実行を継続します。
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="overview-debug-trap"><a class="anchor" href="#overview-debug-trap"></a>明示的なトラップ</h3>
+<div class="paragraph">
+<p>ときどき、ユーザーが定義したメッセージを用いて、無条件にトラップを強制することが有用な場合があります。</p>
+</div>
+<div class="paragraph">
+<p><code>Debug</code> ライブラリでは、この目的のために、<code>trap(t)</code> 関数を提供しており、どのような文脈においても使うことができます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import Debug "mo:base/Debug";
+
+Debug.trap("oops!");</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import Debug "mo:base/Debug";
+
+let swear : Text = Debug.trap("oh my!");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>（前述の <code>Prelude</code> 関数の <code>nyi()</code>、<code>unreachable()</code>、<code>xxx()</code> は、<code>Debug.trap</code> の単純なラッパーです。）</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="overview-assertions"><a class="anchor" href="#overview-assertions"></a>アサーション</h3>
+<div class="paragraph">
+<p>アサーションでは、あるブール値のテストが成立しなかったときに条件付きでトラップし、成立する場合は実行を継続することができます。例えば、以下のようになります：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">let n = 65535;
+assert n % 2 == 0; // n が偶数ではない場合にトラップ</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">assert false; // 無条件にトラップ</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-motoko hljs" data-lang="motoko">import Debug "mo:base/Debug";
+
+assert 1 &gt; 0; // トラップしない
+Debug.print "bingo!";</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>アサーションが成功して実行に移ることもあるため、<code>()</code> 型の値が期待される文脈でのみ使用することができます。</p>
+</div>
+</div>
+</div>
+</div>
+</article>
+<aside class="toc sidebar">
+  
+  <div class="toc-menu"></div>
+</aside></div>
+</main></div>
+<footer class="footer">
+  <div class="footer-container">
+    <a href="http://www.dfinity.org"><img class="footer-logo" src="../../_/img/logo.svg"></a>
+    <nav class="footer-nav">
+      <div class="col1">
+        <h5 class="footer-header">Developers</h5>
+        <a class="footer-link" href="http://www.dfinity.org/faq">
+          FAQ
+        </a>
+        <a class="footer-link" href="#">
+          Developers
+        </a>
+        <a class="footer-link" href="http://www.dfinity.org/data-centers">
+          Data Centers
+        </a>
+      </div>
+
+      <div class="col2">
+        <h5 class="footer-header">Team</h5>
+        <a class="footer-link" href="http://www.dfinity.org/foundation">
+          Foundation
+        </a>
+        <a class="footer-link" href="http://www.dfinity.org/foundation#events">
+          Events
+        </a>
+        <a class="footer-link" href="http://www.dfinity.org/careers">
+          Careers
+        </a>
+      </div>
+
+
+      <div class="col3">
+        <h5 class="footer-header">Media</h5>
+        <a class="footer-link" href="http://www.dfinity.org/media">
+          Featured Videos
+        </a>
+        <a class="footer-link" href="http://www.dfinity.org/media#featured-stories">
+          Featured Stories
+        </a>
+        <a class="footer-link" href="http://www.dfinity.org/newsletter">
+          Newsletter
+        </a>
+      </div>
+
+      <div class="social-icons">
+
+        <a class="social-icon-link" target="blank" href="https://github.com/dfinity">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M12 0C5.3625 0 0 5.3625 0 12C0 17.2875 3.45 21.7875 8.2125 23.4C8.8125 23.5125 9.0375 23.1375 9.0375 22.8375C9.0375 22.5375 9.0375 21.7875 9.0375 20.8125C5.7 21.525 4.9875 19.2 4.9875 19.2C4.425 17.8125 3.6375 17.4375 3.6375 17.4375C2.55 16.6875 3.7125 16.725 3.7125 16.725C4.9125 16.8 5.55 17.9625 5.55 17.9625C6.6375 19.8 8.3625 19.275 9.0375 18.975C9.15 18.1875 9.45 17.6625 9.7875 17.3625C7.125 17.0625 4.3125 16.0125 4.3125 11.4375C4.3125 10.125 4.7625 9.075 5.55 8.2125C5.4375 7.9125 5.025 6.675 5.6625 5.025C5.6625 5.025 6.675 4.6875 8.9625 6.2625C9.9375 6 10.95 5.85 11.9625 5.85C12.975 5.85 14.025 6 14.9625 6.2625C17.25 4.725 18.2625 5.025 18.2625 5.025C18.9 6.675 18.4875 7.9125 18.375 8.2125C19.1625 9.0375 19.6125 10.125 19.6125 11.4375C19.6125 16.05 16.8 17.0625 14.1375 17.3625C14.55 17.7375 14.9625 18.45 14.9625 19.575C14.9625 21.1875 14.9625 22.4625 14.9625 22.875C14.9625 23.2125 15.1875 23.5875 15.7875 23.4375C20.55 21.7875 24 17.2875 24 12C24 5.3625 18.6375 0 12 0Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+        <a class="social-icon-link" target="blank" href="https://medium.com/dfinity-network-blog">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M22.3125 1H1.6875C1.50516 1 1.3303 1.07243 1.20136 1.20136C1.07243 1.3303 1 1.50516 1 1.6875L1 22.3125C1 22.4948 1.07243 22.6697 1.20136 22.7986C1.3303 22.9276 1.50516 23 1.6875 23H22.3125C22.4948 23 22.6697 22.9276 22.7986 22.7986C22.9276 22.6697 23 22.4948 23 22.3125V1.6875C23 1.50516 22.9276 1.3303 22.7986 1.20136C22.6697 1.07243 22.4948 1 22.3125 1V1ZM19.2768 6.21228L18.0971 7.34356C18.0471 7.38153 18.0085 7.43245 17.9854 7.4908C17.9623 7.54916 17.9557 7.61272 17.9661 7.67459V15.9875C17.9557 16.0494 17.9623 16.1129 17.9854 16.1713C18.0085 16.2296 18.0471 16.2806 18.0971 16.3185L19.2493 17.4498V17.698H13.4534V17.4498L14.6469 16.2903C14.7641 16.1731 14.7641 16.1388 14.7641 15.9593V9.24072L11.4455 17.6698H10.9987L7.13319 9.24072V14.8899C7.11729 15.0071 7.12828 15.1264 7.16533 15.2387C7.20237 15.351 7.2645 15.4535 7.347 15.5382L8.89937 17.4213V17.6695H4.49731V17.4213L6.04969 15.5382C6.13152 15.4534 6.19226 15.3505 6.22701 15.2379C6.26177 15.1253 6.26956 15.0061 6.24975 14.8899V8.35866C6.25855 8.26945 6.24627 8.17943 6.21391 8.09584C6.18155 8.01225 6.13001 7.93743 6.06344 7.87741L4.68362 6.21503V5.96684H8.96847L12.2805 13.2303L15.1924 5.96684H19.2768V6.21228Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+        <a class="social-icon-link" target="blank" href="https://twitter.com/dfinity">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M23 5.33654C22.175 5.67308 21.3156 5.94231 20.4219 6.04327C21.35 5.50481 22.0719 4.62981 22.4156 3.58654C21.5562 4.09135 20.5938 4.46154 19.5625 4.66346C18.7031 3.78846 17.5344 3.25 16.2281 3.25C13.7187 3.25 11.725 5.23558 11.725 7.65865C11.725 7.99519 11.7594 8.33173 11.8281 8.66827C8.08125 8.5 4.74688 6.71635 2.54688 4.05769C2.16875 4.69712 1.92813 5.47115 1.92813 6.27885C1.92813 7.82692 2.71875 9.17308 3.92188 9.94712C3.16562 9.91346 2.47812 9.71154 1.89375 9.40865C1.89375 9.44231 1.89375 9.44231 1.89375 9.47596C1.89375 11.6298 3.44063 13.4135 5.50313 13.8173C5.125 13.9183 4.7125 13.9856 4.3 13.9856C4.025 13.9856 3.71562 13.9519 3.44062 13.9183C4.025 15.6683 5.675 16.9471 7.66875 16.9808C6.12187 18.1587 4.1625 18.8654 2.06562 18.8654C1.6875 18.8654 1.34375 18.8317 1 18.7981C2.99375 20.0096 5.36563 20.75 7.90938 20.75C16.2281 20.75 20.7656 14.0192 20.7656 8.16346C20.7656 7.96154 20.7656 7.79327 20.7656 7.59135C21.625 6.98558 22.3813 6.21154 23 5.33654Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+
+        <a class="social-icon-link" target="blank" href="https://forum.dfinity.org/">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12.0932 1C6.0727 1 1 5.83706 1 11.8085C1 12 1.00488 23 1.00488 23L12.0933 22.9901C18.1188 22.9901 23 17.9666 23 11.9951C23 6.02373 18.1188 1 12.0932 1ZM12 18.2857C11.0473 18.2857 10.1388 18.0745 9.32853 17.6916L5.34597 18.6786L6.47047 14.9956C5.98926 14.1067 5.71423 13.0853 5.71423 12C5.71423 8.52815 8.52811 5.71428 12 5.71428C15.4719 5.71428 18.2857 8.52815 18.2857 12C18.2857 15.472 15.4719 18.2857 12 18.2857Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+
+        <a class="social-icon-link" target="blank" href="https://www.linkedin.com/company/dfinity'">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M1 4.35878C1 3.01688 2.03589 2 3.61924 2C5.20139 2 6.17406 3.01448 6.20507 4.35519C6.20507 5.67205 5.20139 6.71456 3.58942 6.71456H3.55841C2.00666 6.71456 1 5.67562 1 4.35878ZM17.5581 8.28158C15.1017 8.28158 13.5625 9.61217 13.278 10.5449V8.41225H8.46122C8.52324 9.54475 8.46122 21.9995 8.46122 21.9995H13.278V14.647C13.278 14.5987 13.2778 14.5505 13.2775 14.5025C13.2756 14.1436 13.2736 13.7952 13.383 13.5365C13.714 12.7194 14.4255 11.8719 15.7046 11.8719C17.3775 11.8719 18.1378 13.128 18.1378 14.9685V21.9995H23V14.4448C23 10.236 20.6056 8.28158 17.5581 8.28158ZM1.55371 8.41275H5.84157V22H1.55371V8.41275Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+
+        <a class="social-icon-link" target="blank" href="https://youtube.com/dfinity">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M23.775 7.6375C23.775 7.6375 23.55 5.9875 22.8375 5.2375C21.9375 4.3 20.8875 4.2625 20.4375 4.225C17.025 4 12 4 12 4C12 4 6.975 4 3.6 4.225C3.1125 4.2625 2.1 4.3 1.2 5.2375C0.4875 5.95 0.2625 7.6375 0.2625 7.6375C0.2625 7.6375 0 9.5875 0 11.5375V13.375C0 15.325 0.225 17.275 0.225 17.275C0.225 17.275 0.45 18.925 1.1625 19.675C2.0625 20.6125 3.2625 20.6125 3.825 20.6875C5.7375 20.875 12 20.9125 12 20.9125C12 20.9125 17.025 20.9125 20.4 20.65C20.8875 20.6125 21.9 20.575 22.8 19.6375C23.5125 18.925 23.7375 17.2375 23.7375 17.2375C23.7375 17.2375 24 15.2875 24 13.3375V11.5C24 9.5875 23.775 7.6375 23.775 7.6375ZM9.525 15.55V8.8L16.0125 12.175L9.525 15.55Z"
+              fill="#333333" />
+          </svg>
+
+        </a>
+
+      </div>
+    </nav>
+
+    <div class="legal-container">
+      <span class="legal" id="year">
+        © 2020 DFINITY
+      </span>
+      <a class="legal footer-link" href="http://www.dfinity.org/terms-of-use">
+        Terms of Use
+      </a>
+      <a class="legal footer-link" href="http://www.dfinity.org/cookie-policy">
+        Cookie Policy
+      </a>
+      <a class="legal footer-link" href="http://www.dfinity.org/privacy-policy">
+        Privacy Policy
+      </a>
+    </div>
+
+  </div>
+</footer>
+
+
+<script>
+  var today = new Date();
+  var year = today.getFullYear();
+  document.getElementById("year").innerHTML = `© ${year} DFINITY`;
+</script><script src="../../_/js/site.js"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript"> docsearch({
+    apiKey: 'b93d56cc4b00b0afbcdaacab04dcf25b',
+    indexName: 'dfinity_sdk',
+    inputSelector: '.search-input',
+    debug: false // Set debug to true if you want to inspect the dropdown
+  });
+</script>
+
+<!-- Start of dfinity Zendesk Widget script -->
+<script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=53121947-c10a-484c-b99b-f89a9fb6f63e"> </script>
+<!-- End of dfinity Zendesk Widget script -->
+
+<script src="../../_/js/vendor/run_repl.js"></script>
+<script type="module">
+  import {CodeJar} from 'https://cdn.jsdelivr.net/npm/codejar@3.2.3/codejar.min.js';
+  import {withLineNumbers} from 'https://cdn.jsdelivr.net/npm/codejar@3.2.3/linenumbers.js';
+  window.CodeJar = CodeJar;
+  window.withLineNumbers = withLineNumbers;
+</script> 
+<script type="text/javascript">
+async function addPackage(name, repo, version, dir) {
+  const meta_url = `../../_/js/vendor/${repo}/flat`;
+  const base_url = `../../_/js/vendor/${repo}`;
+  const response = await fetch(meta_url);
+  const json = await response.json()
+  const promises = [];
+  const fetchedFiles = [];
+  for (const f of json.files) {
+    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.name)).text();
+        const stripped = name + f.name.slice(dir.length + 1);
+        fetchedFiles.push(stripped);
+        Motoko.saveFile(stripped, content);
+      })();
+      promises.push(promise);
+    }
+  }
+  Promise.all(promises).then(() => {
+    Motoko.addPackage(name, name + '/');
+    console.log("base library loaded");
+    changeCodeBlock(); // from run_repl.js
+  });
+}
+function loadBase() {
+  addPackage('base', 'dfinity/motoko-base', 'moc-0.6.27', 'src');
+}
+</script>
+<script async src="../../_/js/vendor/moc.js" onload="loadBase()">
+</script>
+  </body>
+</html>
