@@ -1,0 +1,174 @@
+= 構造的等価性
+
+等式 (`+==+`) と不等式 (`+!=+`) は *構造的* です。つまり、2 つの値 `+a+` と `+b+` が同じ内容であれば、メモリ上の値の物理的な表現（同一性）にかかわらず常に等価となり、 `+a == b+` です。
+
+例えば、文字列 `+"hello world "+` と `+"hello " #"world "+` は、メモリ上では異なるオブジェクトで表現されている可能性が高いですが等価とみなされます。
+
+等価性は、`+shared+` 型か、あるいはミュータブルなフィールド・ミュータブルな配列・非 `shared` 関数・ジェネリクス型（総称型）のコンポーネントのいずれも含まない型に対してのみ定義されます。
+
+例えば、オブジェクトの配列を比較することができます。
+
+[source.run, motoko]
+....
+let a = [ { x = 10 }, { x = 20 } ];
+let b = [ { x = 10 }, { x = 20 } ];
+a == b;
+....
+
+重要なのは、参照で比較しているのではなく、値で比較していることです。
+
+[#sub-typing]
+== サブタイピング
+
+等価性はサブタイピングを尊重するので、`+{ x = 10 } == { x = 10; y = 20 }+` は `true` を返します。
+
+サブタイピングに適応するために、異なる型の 2 つの値は、共通のスーパータイプが等しい場合、すなわち共通の構造が一致する場合に等しいとします。
+コンパイラは、これが微妙に望ましくない挙動をする可能性がある場合に警告します。
+例えば、`{ x = 10 } == { y = 20 }` は、2 つの値の共通構造である空のレコード型を比較することになるため、`true` を返します。
+これは意図していない可能性が高いため、コンパイラは警告を発します。
+
+[source.run, motoko]
+....
+{ x = 10 } == { y = 20 };
+....
+
+[#generic-types]
+== ジェネリクス型
+
+ジェネリクス型の変数が `+shared+` であることを宣言することはできないので、等号は非ジェネリクス型に対してのみ使用できます。
+例えば、次の式は警告を発します。
+
+[source.run, motoko]
+....
+func eq<A>(a : A, b : A) : Bool = a == b;
+....
+
+この 2 つは `Any` 型で比較され、引数に関係なく `true` を返すため、期待したようには動作しません。
+
+もし、あなたのコードでこの制限に遭遇したら、比較のための `+(A, A) -> Bool+` 型の関数を引数として受け取り、その関数を用いて値を比較するようにすべきです。
+
+例えば、リストのメンバ一覧を取得するテストを見てみましょう。
+この最初の実装は _うまく動きません_。
+
+[source.run, motoko]
+....
+import List "mo:base/List";
+
+func contains<A>(element : A, list : List.List<A>) : Bool {
+  switch list {
+    case (?(head, tail))
+      element == head or contains(element, tail);
+    case null false;
+  }
+};
+
+assert(not contains(1, ?(0, null)));
+....
+
+このアサーションは常にトラップされます。なぜなら、コンパイラは `+A+` 型を `+Any+` 型として比較し、これは常に `+true+` になるためです。したがって、リストに少なくとも 1 つの要素がある限り、`+contains+` は常に真を返します。
+
+以下の 2 番目の実装では、比較のための関数を明示的に受け付ける方法を示しています。
+
+[source.run, motoko]
+....
+import List "mo:base/List";
+import Nat "mo:base/Nat";
+
+func contains<A>(eqA : (A, A) -> Bool, element : A, list : List.List<A>) : Bool {
+  switch list {
+    case (?(head, tail))
+      eqA(element, head) or contains(eqA, element, tail);
+    case null false;
+  }
+};
+
+assert(not contains(Nat.equal, 1, ?(0, null)));
+....
+
+////
+= Structural equality
+
+Equality (`+==+`) — and by extension inequality (`+!=+`) — is *structural*: two values `+a+` and `+b+` are equal, `+a == b+`, whenever they have equal contents, regardless of the physical representation, or identity,  of those values in memory. 
+
+For example, the strings `+"hello world"+`  and `+"hello " #  "world"+` are equal, even though they are most likely  represented by different objects in memory.
+
+Equality is defined only on `+shared+` types or on types that don't contain mutable fields, mutable arrays, non-shared functions, or components of generic type.
+
+For example, we can compare arrays of objects.
+
+[source.run, motoko]
+....
+let a = [ { x = 10 }, { x = 20 } ];
+let b = [ { x = 10 }, { x = 20 } ];
+a == b;
+....
+
+Importantly, this does _not_ compare by reference, but by value.
+
+== Subtyping
+
+Equality respects subtyping so `+{ x = 10 } == { x = 10; y = 20 }+` returns `true`.
+
+To accommodate subtyping, two values of different types are equal if they are equal at their most specific, common supertype, meaning they agree on their common structure.
+The compiler will warn in cases where this might lead to subtle unwanted behaviour.
+For example: `{ x = 10 } == { y = 20 }` will return `true` because the two values get compared at the empty record type.
+That's unlikely the intention, so the compiler will emit a warning here.
+
+[source.run, motoko]
+....
+{ x = 10 } == { y = 20 };
+....
+
+== Generic types
+
+It is not possible to declare that a generic type variable is `+shared+`, so equality can only be used on non-generic types. 
+For example, the following expression generates a warning like this:
+
+[source.run, motoko]
+....
+func eq<A>(a : A, b : A) : Bool = a == b;
+....
+
+Comparing these two at the `Any` type means this comparison will return `true` no matter its arguments, so this doesn't work as one might hope.
+
+If you run into this limitation in your code, you should accept a comparison function of type `+(A, A) -> Bool+` as an argument, and use that to compare the values instead.
+
+Let's look at a list membership test for example. 
+This first implementation _does not_ work:
+
+[source.run, motoko]
+....
+import List "mo:base/List";
+
+func contains<A>(element : A, list : List.List<A>) : Bool {
+  switch list {
+    case (?(head, tail))
+      element == head or contains(element, tail);
+    case null false;
+  }
+};
+
+assert(not contains(1, ?(0, null)));
+....
+
+This assertion will trap because the compiler compares the type `+A+` at `+Any+` which is always `+true+`. So as long as the list has at least one element, this version of `+contains+` will always return true.
+
+This second implementation shows how to accept the comparison function explicitly instead:
+
+[source.run, motoko]
+....
+import List "mo:base/List";
+import Nat "mo:base/Nat";
+
+func contains<A>(eqA : (A, A) -> Bool, element : A, list : List.List<A>) : Bool {
+  switch list {
+    case (?(head, tail))
+      eqA(element, head) or contains(eqA, element, tail);
+    case null false;
+  }
+};
+
+assert(not contains(Nat.equal, 1, ?(0, null)));
+....
+
+////
