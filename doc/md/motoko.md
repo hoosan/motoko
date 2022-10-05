@@ -1,4 +1,100 @@
-# Motoko Programming Language
+# Motoko Programming Language# Motoko プログラミング言語
+
+:::tip
+
+Motoko プログラミング言語は、 DFINITY Canister SDK のリリースや、 Motoko コンパイラのアップデートを経て進化を続けています。 新しい機能を試したり、何が変わったのかを知るために、定期的に戻って確認しに来ましょう。
+
+:::
+
+Motoko プログラミング言語は、Internet Computer ブロックチェーンネットワーク上で動く次世代の Dapps をビルドしたい開発者のための、新しく現代的で型安全な言語です。 Motoko は、Internet Computer のユニークな機能をサポートし、親しみやすいけど頑丈なプログラミング環境を提供するよう、特別に設計されています。 新しい言語として Motoko は、新たな機能や改善のサポートを経て進化し続けています。
+
+Motoko コンパイラ、ドキュメント、また他のツールは、 [オープンソース](https://github.com/dfinity/motoko) であり、Apache 2.0 ライセンスのもとでリリースされています。コントリビュートは歓迎です。
+
+## ネイティブ Canister スマートコントラクトサポート
+
+Motoko は、Internet Computer Canister スマートコントラクトをネイテイブサポートしています。
+
+Canister スマートコントラクト (または略して Canister) は、 Motoko Actor として表されます。 Actor とは、そのステートを完全にカプセル化して、非同期メッセージでのみ別の Actor との通信を行う自律的なオブジェクトです。
+
+```motoko name=counter file=./examples/Counter.mo
+
+```
+
+## ダイレクトスタイルでシーケンシャルにコードを書く
+
+Internet Computer 上では、Canisters は他の Canisters と非同期のメッセージを送ることでコミュニケーションができます。
+
+非同期のプログラミングは難しいので、Motoko はより単純なシーケンシャルスタイルでコードを書くことを可能にしています。非同期のメッセージは _future_ を返す関数呼び出しであり、`await` コンストラクトは future が完了するまで処理を延期することを許可します。この単純な機能は、他の言語でも不適切である非同期プログラミングでの"コールバック地獄"を回避します。
+
+```motoko include=counter file=./examples/factorial.mo#L9-L21
+
+```
+
+## 現代的な型システム
+
+Motoko は、JavaScript や他の有名言語と直感的に馴染みやすくなるよう設計されていますが、構造的型、ジェネリクス、バリアント型、または静的なパターンマッチングのような現代的な機能も提供します。
+
+```motoko file=./examples/tree.mo
+
+```
+
+## 自動生成の IDL ファイル
+
+Motoko Actor は、引数と返り値の型を示す関数として、常に型付けされたインターフェースをクライアントに、提供しています。
+
+Motoko コンパイラー（かつ SDK ）は、Candid と呼ばれる言語に依存しないフォーマットでこのインターフェースを出力するので、Candid をサポートしている別の Canisters やブラウザ上のコードやスマートフォンアプリは、Actor のサービスを利用することができます。Motoko コンパイラは、Candid ファイルを使用したり生成したりすることができ、Motoko にシームレスに（ Candid をサポートしている）他の言語で実装された Canister と接続することを可能にします。
+
+例えば、上で示した Motoko の `Counter` Actor は、次に続く Candid インターフェースを持っています。
+
+```candid
+service Counter : {
+  inc : () -> (nat);
+}
+```
+
+## 直交永続性
+
+Internet Computer は、作動している Canister のメモリと他のステートも保持しています。それゆえ、Motoko Actor のステートは、そのインメモリデータ構造も含め永久に残り続けます。Actor のステートは、それぞれのメッセージと共に復元することや外部ストレージに保存することを明確に必要としていません。
+
+例えば、シーケンシャルな ID をテキストの名前に割り当てる次の `Registry` Actor (Canister) では、Actor のステートがたくさんの Internet Computer ノードマシーンで複製されたもので、一般的にメモリ内にはいないれども、ハッシュテーブルのステートはコールを介して保存されています。
+
+```motoko file=./examples/Registry.mo
+
+```
+
+## アップグレード
+
+Motoko は、Canister のコードをアップグレードするとき Canister のデータを保持できることを許可する言語機能を含めた、直交永続性を活用するのを助ける数多くの機能を提供しています。
+
+例えば、Motoko は、ある変数を `stable` として宣言することができます。 `stable` 変数の値は、 Canister アップグレードでも自動的に保持されます。
+
+stable カウンターを考えてみましょう。
+
+```motoko file=./examples/StableCounter.mo
+
+```
+
+インストール後に _n_ 回インクリメントされ、その後中断することなく、より多機能な実装へとアップグレードすることができます。
+
+```motoko file=./examples/StableCounterUpgrade.mo
+
+```
+
+`value` は `stable` として宣言されていたので、現在のステートやサービスの n はアップグレードの後でも保持されています。カウンティングは、0 から再度始まるのではなく、n 回目から始まります。
+
+その新しいインターフェースは過去のものと互換性がありますので、既に存在している Canister に関するクライアントは動作を続けていきますが、新しいクライアントは、アップグレードした機能を最大限利用することもできます。（追加の `reset` 機能）
+
+stable な変数の使用のみでは解決できないシナリオのために、Motoko は、アップグレードの前後で即座に動作するかつ任意のステートを静的な変数にすることを許可する、ユーザーが定義できるアップグレードフックを提供しています。
+
+## さらなる機能
+
+Motoko は、サブタイピング、任意精度演算、またはガベージコレクションを含めた、多くの開発者の生産性を上げる機能を提供しています。
+
+Motoko は、スマートコントラクト Canister を導入するためだけの言語ではなく、またそうであることを意図していません。もしあなたのニーズを満たさない時のために、Rust プログラミング言語の CDK があります。 私達の目標は、言語に左右されない Candid インターフェースを通し、他国の Canister スマートコントラクトと一緒に Internet Computer 上で動作する Canister スマートコントラクトを、いかなる言語でも作成できるようにすることです。
+
+そのオーダーメイド設計は、少なくともしばらくの間 Motoko が Internet Computer 上でのコーディングにおいて最も簡単かつ安全な言語であろうことを意味しています。
+
+<!--
 
 :::tip
 
@@ -91,3 +187,5 @@ Motoko provides many other developer productivity features, including subtyping,
 Motoko is not, and is not intended to be, the only language for implementing canister smart contracts. If it doesn’t suit your needs, there is a canister development kit (CDK) for the Rust programming language. Our goal is to enable any language (with a compiler that targets WebAssembly) to be able to produce canister smart contracts that run on the Internet Computer and interoperate with other, perhaps foreign, canister smart contracts through language neutral Candid interfaces.
 
 Its tailored design means Motoko should be the easiest and safest language for coding on the Internet Computer, at least for the forseeable future.
+
+-->

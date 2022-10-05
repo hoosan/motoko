@@ -1,3 +1,160 @@
+# ステーブル（Stable）変数とアップグレード方法
+
+Internet Computer の重要な特徴の一つは、従来のデータベースとは異なり、WebAssembly のメモリとグローバルを使用することで、Canister のスマートコントラクトのステートを永続化できることです。これは、明示的なユーザーの指示なしに、Canister のステート全体が各メッセージの前に魔法のように復元され、後に保存されることを意味します。この自動的でユーザーに影響を与えない（user-transparent）ステートの保存は、_直交永続性（orthogonal persistence）_ と呼ばれています。
+
+直交永続性は便利ですが、Canister のコードを更新する際に課題が生じます。 Canister のステートを明示的に表現することなく、引退した Canister から新たな Canister にアプリケーションのデータをどのように移行すればよいのでしょうか。
+
+データを失うことなくアップグレードに対応するには、Canister の重要なデータをアップグレード後の Canister に _移行_ するための新しい機能が必要です。 たとえば、ユーザ登録を行う Canister があったとし、問題を修正したり新たな機能を追加したりするために新しいバージョンをデプロイしたい場合、すでに登録されているユーザ情報がアップグレード処理後に失われないようにする必要があります。
+
+Internet Computer の永続化モデルにより、Canister はこのようなデータを専用の _ステーブルメモリ（stable memory）_ に保存し、復元することができます。ステーブルメモリは通常の Canister メモリとは異なり、アップグレードしても保持されるので、Canister はデータを一括して新たな Canister に転送することができます。
+
+Motoko で書かれたアプリケーションでは、Internet Computer のステーブルメモリを活用したステート保持のための高レベルなサポートが提供されます。この高レベルの機能は _ステーブルストレージ（stable storage）_ と呼ばれ、アプリケーションのデータと、コードを生成するために使用される Motoko コンパイラの両方への変更に対応するように設計されています。
+
+ステーブルストレージの活用はアプリケーションプログラマであるあなた次第であり、アップグレード後も保持したいデータを予測し、指示することが必要です。 アプリケーションによって、永続化するデータは、ある Actor のステートの一部かすべて、または一切ない可能性もあります。
+
+## ステーブル変数の宣言
+
+Actor では、変数宣言の修飾子として `stable` キーワードを使用することで、変数をステーブルストレージ（Internet Computer ステーブルメモリ）に登録することができます。
+
+より正確には、Actor 内のすべての `let` と `var` の変数宣言において、その変数が `stable` と `flexible` のどちらであるかを指定することができます。 修飾子を指定しなかった場合、変数はデフォルトで `flexible` として宣言されます。
+
+以下に、カウンタの値を保持したままアップグレードすることができる、ステーブルなカウンタを宣言するための簡単な例を示します。
+
+```motoko file=./examples/StableCounter.mo
+
+```
+
+`stable` または `flexible` 修飾子は、 **Actor フィールド** の `let` および `var` 宣言にのみ使用することができます。これらの修飾子は、プログラム中の他の場所では使用できません。
+
+## 型付け（Typing）
+
+コンパイラは、アップグレード後のプログラムにおいて、ステーブル変数が互換性と意味を持つことを保証しなければならないため、ステーブルなステートには以下の型制約が適用されます。
+
+- すべての `stable` 変数は _stable_ 型を持たなければなりません。
+
+ここで、`var` 修飾子を無視したときに型が _shared_ であれば、_stable_ 型となります。
+
+したがって、stable 型と shared 型の唯一の違いは、前者はミュータブルな更新（mutation）をサポートしていることです。 shared 型と同様に、stable 型はローカル関数とローカル関数から構築された構造体（オブジェクトなど）を除外した一次データ（first-order data）に限定されます。 このように関数を除外する必要があるのは、データとコードの両方からなる関数値の意味は、アップグレードの際に容易に保存できないからです。一方、プレーンデータの意味は、ミュータブルかどうかにかかわらず保存可能です。
+
+:::note
+
+一般的に、オブジェクト型はローカル関数を含むことができるため、ステーブルではありません。 しかし、ステーブルなデータのプレーンレコードは、オブジェクト型の特別なケースとしてステーブル型になります。 さらに、Actor や shared 関数への参照もステーブルであるため、アップグレードをまたいでその値を保持することができます。 たとえば、Service を参照している Actor や shared 関数のコールバックを記録するステートを保持することができます。
+
+:::
+
+## ステーブル変数のアップグレード方法
+
+Canister を最初にコンパイルしてデプロイするとき、Actor 内のすべてのフレキシブル（flexible）変数とステーブル変数が順番に初期化されます。 `upgrade` モードを使用して Canister をデプロイすると、Actor の前のバージョンに存在したすべてのステーブル変数が、古い値で事前に初期化されます。 ステーブル変数が以前の値で初期化された後、残りのフレキシブル変数と新しく追加されたステーブル変数が順番に初期化されます。
+
+## プリアップグレード（preupgrade）およびポストアップグレード（postupgrade）のシステムメソッド
+
+変数を `stable` なものとして宣言するには、その型もステーブル型である必要があります。 すべての型がステーブルであるわけではないので、いくつかの変数は `stable` と宣言することができません。
+
+簡単な例として、[直交永続性](motoko.md#orthogonal_persistence) の議論にある `Registry` Actor を考えてみましょう。
+
+```motoko file=./examples/Registry.mo
+
+```
+
+この Actor は、`map` オブジェクトのサイズを使用して次の ID を決定することで、`Text` 値に連続した ID を割り当てます。 他の Actor と同様に、呼び出しの間にハッシュマップのステートを維持するために _直交永続性_ を頼っています。
+
+ここで、私たちはアップグレードによって既存の記録を失なうことなく `Register` をアップグレード可能にしたいとします。
+
+残念なことに、ステートである `map` はメンバ関数（例えば `map.get`）を含むオブジェクト型を持っているので、`map` 変数自身を `stable` と宣言することはできません。
+
+このようなステーブル変数だけでは解決できないシナリオのために、Motoko はユーザー定義のアップグレードフック（upgrade hook）をサポートしており、使用するとアップグレードの前後にすぐさま実行されます。 これらのアップグレードフックによって、制限のないフレキシブル変数と、より制限のあるステーブル変数との間でステートを移行させることができます。 これらのフックは `system` 関数として宣言され、特別な名前（`preugrade` と `postupgrade`）がついています。どちらの関数も型は `: () → ()` である必要があります。
+
+`preupgrade` メソッドを使用すると、ランタイムがステーブルメモリに値をコミットしてアップグレードを行う前に、ステーブル変数に最終的な更新を行うことができます。 `postupgrade` メソッドは、アップグレードがステーブル変数を含む新たな Actor を初期化した後、その Actor で shared 関数の呼び出し（メッセージ）を行う前に実行されます。
+
+ここでは、新しいステーブル変数 `entries` を導入し、stable でないハッシュテーブルのエントリを保存・復元します。
+
+```motoko file=./examples/StableRegistry.mo
+
+```
+
+`entries` の型は、単に `Text` と `Nat` のペアの配列であり、実際にステーブル型であることに注目してください。
+
+この例では、 `preupgrade` システムメソッドは、 `entries` をステーブルメモリに保存する前に、現在の `map` エントリを `entries` に単に書き込んでいます。 `postupgrade` システムメソッドは、`entries` から `map` の空き領域に値を埋めた後、 `entries` を空の配列にリセットしています。
+
+## ステーブル型のシグネチャ
+
+Actor 内のステーブル変数宣言のコレクションは、_ステーブルシグネチャ（stable signature）_ にまとめることができます。
+
+Actor のステーブルシグネチャのテキスト表現は Motoko Actor 型の内部構造と似ています。
+
+```motoko no-repl
+actor {
+  stable x : Nat;
+  stable var y : Int;
+  stable z : [var Nat];
+};
+```
+
+これは Actor のステーブルフィールドの名前・型・ミュータブルかどうかを指定しています。 場合によっては関連する Motoko の型宣言を前に行うこともあります。
+
+:::tip
+
+`moc` コンパイラのオプションである `--stable-types` を使うと、メインの Actor や Actor クラスのステーブルシグネチャを `.most` ファイルに出力することができます。 そのため、自分で `.most` ファイルを作成する必要はありません。
+
+:::
+
+ステーブルシグネチャ `<stab-sig1>` は、以下の場合に限り、シグネチャ `<stab-sig2>` と _ステーブル互換（stable-compatible）_ となります。
+
+- `<stab-sig1>` のすべてのイミュータブルフィールド `stable <id> : T` は、 `<stab-sig2>` のフィールド `stable <id> : U` と一致し、`T <: U` である（訳注：`<:` はサブタイプ記号であり、`A <: B` なら A は B のサブタイプ）。
+
+- `<stab-sig1>` の全てのミュータブルフィールド `stable var <id> : T` は `<stab-sig2>` のフィールド `stable var <id> : U` とマッチし、`T <: U` である。
+
+`<stab-sig2>` には追加のフィールドが含まれている可能性があることに注意してください。 通常 `<stab-sig1>` は古いバージョンのシグネチャで、`<stab-sig2>` は新しいバージョンのシグネチャです。
+
+ステーブルフィールドのサブタイピング条件は、あるフィールドの最終的な値が、アップグレード後のコードでそのフィールドの初期値として使われることを保証します。
+
+:::tip
+
+`moc` コンパイラのオプションである `--stable-compatible cur.most nxt.most` を使用すると、（ステーブルシグネチャを含む）2 つの `.most` ファイル（`cur.most` と `nxt.most`）のステーブル互換性（stable-compatiblity）を確認することができます。
+
+:::
+
+:::note
+
+_ステーブル互換_ の関係は、かなり保守的なものです。 将来的には、フィールドのミュータビリティの変更や `<stab-sig1>` からのフィールドの放棄（ただし警告を伴う）に対応するために緩和されるかもしれません。
+
+:::
+
+## アップグレードの安全性
+
+デプロイされた Canister をアップグレードする前に、アップグレードが安全で、以下のようなことがないことを確認する必要があります。
+
+- （Candid インターフェース変更によって）既存のクライアントが壊れる。
+
+- （ステーブル宣言の互換性のない変更によって）Motoko のステーブルステートを破棄する。
+
+Motoko Canister のアップグレードは、以下の条件を満たせば安全です。
+
+- Canister の Candid インターフェースが Candid におけるサブタイプになっている。
+
+- Canister の Motoko ステーブルシグネチャが、_ステーブル互換_ なものになっている。
+
+アップグレードの安全性は、アップグレード処理が成功することを保証するものではありません（リソースの制約により失敗する可能性はあります）。 しかし、少なくともアップグレードが成功すれば、既存のクライアントとの Candid 型の互換性が失われたり、`stable` とマークされていたデータが予期せず失われたりしないことを保証するはずです。
+
+:::tip
+
+`didc` ツールに `check nxt.did cur.did` という引数を与えることで、（Candid 型を含む) `cur.did` と `nxt.did` という `.did` ファイルに記述された 2 つの Service 間における有効な Candid のサブタイプのチェックを行うことができます。 `didc` ツールは <https://github.com/dfinity/candid> で入手可能です。
+
+:::
+
+## メタデータセクション
+
+Motoko のコンパイラは、Canister の Candid インターフェースとステーブルシグネチャを、Canister のメタデータとして埋め込み、コンパイル済みバイナリの Wasm カスタムセクションに記録します。
+
+このメタデータは IC によって選択的に公開され、`dfx` のようなツールによってアップグレードの互換性を検証するために使用されます。
+
+## すでにデプロイされた Actor または Canister スマートコントラクトのアップグレード
+
+適切な `stable` 変数、または `preupgrade` と `postupgrade` システムメソッドを用いて Motoko Actor をデプロイした後、`dfx canister install` コマンドに `--mode=upgrade` オプションを指定すると、既にデプロイしたバージョンをアップグレードすることが可能です。 デプロイされた Canister のアップグレードに関する情報は [Canister スマートコントラクトのアップグレード](../../project-setup/manage-canisters.md#upgrade-a-canister) を参照してください。
+
+今後の `dfx` のバージョンでは、デプロイされたバイナリとアップグレードバイナリに埋め込まれた Candid と (Motoko で書かれた Canister のみ) ステーブルシグネチャを比較してアップグレードの安全性を確認し、安全ではない場合はアップグレード要求を中止するようになります。
+
+<!--
 # Stable variables and upgrade methods
 
 One key feature of the Internet Computer is its ability to persist canister smart contract state using WebAssembly memory and globals rather than a traditional database. This means that that the entire state of a canister is magically restored before, and saved after, each message, without explicit user instruction. This automatic and user-transparent preservation of state is called *orthogonal persistence*.
@@ -12,9 +169,11 @@ For applications written in Motoko, the language provides high-level support for
 
 Utilizing stable storage depends on you — as the application programmer — anticipating and indicating the data you want to retain after an upgrade. Depending on the application, the data you decide to persist might be some, all, or none of a given actor’s state.
 
-<!--
-To enable {proglang} to migrate the current state of variables when a canister is upgraded, you must identify those variables as containing data that must be preserved.
 -->
+<!--
+To enable Motoko to migrate the current state of variables when a canister is upgraded, you must identify those variables as containing data that must be preserved.
+-->
+<!--
 
 ## Declaring stable variables
 
@@ -22,6 +181,7 @@ In an actor, you can nominate a variable for stable storage (in Internet Compute
 
 More precisely, every `let` and `var` variable declaration in an actor can specify whether the variable is `stable` or `flexible`. If you don’t provide a modifier, the variable is declared as `flexible` by default.
 
+-->
 <!--
 Concretely, you use the following syntax to declare stable or flexible variables in an actor:
 
@@ -30,6 +190,7 @@ Concretely, you use the following syntax to declare stable or flexible variables
   (public|private)? (stable|flexible)? dec
 ....
 -->
+<!--
 
 The following is a simple example of how to declare a stable counter that can be upgraded while preserving the counter’s value:
 
@@ -167,3 +328,5 @@ This metadata can be selectively exposed by the IC and used by tools such as `df
 After you have deployed a Motoko actor with the appropriate `stable` variables or `preupgrade` and `postupgrade` system methods, you can use the `dfx canister install` command with the `--mode=upgrade` option to upgrade an already deployed version. For information about upgrading a deployed canister, see [Upgrade a canister smart contract](../../project-setup/manage-canisters.md#upgrade-a-canister).
 
 An upcoming version of `dfx` will, if appropriate, check the safety of an upgrade by comparing the Candid and (for Motoko canisters only) the stable signatures embedded in the deployed binary and upgrade binary, and abort the upgrade request when unsafe.
+
+-->
